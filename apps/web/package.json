@@ -10,8 +10,12 @@
     "test": "npx cypress verify & cypress run --component"
   },
   "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
+    "@types/axios": "^0.14.0",
+    "axios": "^1.7.2",
     "cross-env": "^7.0.3",
     "next": "^14.2.5",
+    "next-images": "^1.8.5",
     "react": "^18",
     "react-dom": "^18"
   },
