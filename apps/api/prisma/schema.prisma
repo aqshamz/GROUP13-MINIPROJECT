@@ -10,12 +10,201 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Sample {
+// enums
+enum Role {
+  Customer
+  Organizer
+}
+
+enum TicketStatus {
+  Purchased
+  Cancelled
+}
+
+enum TransactionStatus {
+  Completed
+  Pending
+  Cancelled
+}
+
+enum EventType {
+  Free
+  Paid
+}
+
+enum StatusDiscount {
+  Available
+  Used
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique
+  password     String
+  email        String       @unique
+  role         Role         @default(Customer)
+  referralCode String?      @unique
+  attempts     Int          @default(0)
+  suspend      Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relationships
+  userpoints        UserPoint[]
+  userdiscounts     UserDiscount[]
+  events            Event[]
+  tickets           Ticket[]
+  comments          Comment[]
+  statistics        Statistic[]
+  // referralsGiven    Referral[]  @relation("Referrer")
+  // referralsReceived Referral[]  @relation("Referred")
+  transactions      Transaction[]
+
+  @@map("users") // if you want to use snake_case format
+}
+
+model UserPoint {
+  id           Int          @id @default(autoincrement())
+  user         User         @relation(fields: [userId], references: [id])
+  userId       Int          
+  points       Int          @default(0)
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime
+
+  // Relationships
+  @@map("userpoints") // if you want to use snake_case format
+}
+
+model UserDiscount {
+  id                  Int          @id @default(autoincrement())
+  user                User         @relation(fields: [userId], references: [id])
+  userId              Int         
+  discountPercentage  Int
+  status              StatusDiscount
+  createdAt           DateTime   @default(now())
+  expiresAt           DateTime
+  // Relationships
+  @@map("userdiscounts") // if you want to use snake_case format
+}
+
+model Category {
   id        Int      @id @default(autoincrement())
-  name      String
-  code      String   @unique
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("samples") // if you want to use snake_case format
+  // Relationships
+  events    Event[]
+
+  @@map("categories") // if you want to use snake_case format
+}
+
+model Event {
+  id             Int          @id @default(autoincrement())
+  organizer      User         @relation(fields: [organizerId], references: [id])
+  organizerId    Int
+  category       Category     @relation(fields: [categoryId], references: [id])
+  categoryId     Int
+  name           String
+  price          Decimal      @db.Decimal(10, 2) @default(0)
+  datetime       DateTime
+  locationId     Int
+  location       Location   @relation(fields: [locationId], references: [id])
+  description    String
+  availableSeats Int
+  eventType      EventType
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relationships
+  tickets      Ticket[]
+  eventdiscounts    EventDiscount[]
+  transactions Transaction[]
+  statistics   Statistic[]
+
+  @@map("events")
+}
+
+model Location {
+  id     Int     @id @default(autoincrement())
+  name   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events Event[]
+  @@map("locations")
+}
+
+model Ticket {
+  id          Int           @id @default(autoincrement())
+  event       Event         @relation(fields: [eventId], references: [id])
+  eventId     Int
+  attendee    User          @relation(fields: [attendeeId], references: [id])
+  attendeeId  Int
+  price       Decimal       @db.Decimal(10, 2)
+  ticketType  String?
+  status      TicketStatus
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("tickets")
+}
+
+model Comment {
+  id            Int         @id @default(autoincrement())
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transactionId Int
+  attendee      User        @relation(fields: [attendeeId], references: [id])
+  attendeeId    Int
+  text       String
+  createdAt     DateTime    @default(now())
+
+  @@map("comments")
+}
+
+model EventDiscount {
+  id                  Int      @id @default(autoincrement())
+  event               Event    @relation(fields: [eventId], references: [id])
+  eventId             Int
+  code                String   @unique
+  discountPercentage  Int
+  validFrom           DateTime
+  validTo             DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("eventdiscounts")
+}
+
+model Transaction {
+  id              Int                 @id @default(autoincrement())
+  user            User                @relation(fields: [userId], references: [id])
+  userId          Int
+  event           Event               @relation(fields: [eventId], references: [id])
+  eventId         Int
+  totalAmount     Decimal             @db.Decimal(10, 2)
+  pointAmount     Decimal             @db.Decimal(10, 2)
+  discountAmount  Decimal             @db.Decimal(10, 2)
+  finalAmount     Decimal             @db.Decimal(10, 2)
+  status          TransactionStatus
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  comments      Comment[]
+
+  @@map("transactions")
+}
+// pointamount tambahin
+
+model Statistic {
+  id              Int         @id @default(autoincrement())
+  organizer       User        @relation(fields: [organizerId], references: [id])
+  organizerId     Int
+  event           Event       @relation(fields: [eventId], references: [id])
+  eventId         Int
+  totalAttendees  Int
+  totalRevenue    Decimal     @db.Decimal(10, 2)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("statistics")
 }
