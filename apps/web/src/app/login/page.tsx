@@ -16,7 +16,7 @@ const LoginPage = () => {
     try {
       const logindata = await login(email, password);
       await deleteCookie("authToken");
-      await setCookies("authToken", logindata.data.token);
+      await setCookies("authToken", logindata.token);
       router.push("/");      
     } catch (error) {
       toast({
