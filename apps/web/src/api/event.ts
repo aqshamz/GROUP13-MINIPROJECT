@@ -136,9 +136,7 @@ export async function getEventsByCategoryAndLocation(
 export async function createEvent(formData: FormData) {
   try {
     const authToken = await getCookie("authToken")
-    const organizerId = await getCookie("organizerId");
-
-    formData.append("organizerId", organizerId);
+    
     const res = await axios.post(`${base_api}/event/add`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

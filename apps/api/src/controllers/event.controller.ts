@@ -3,6 +3,7 @@ import prisma from '../prisma'
 import multer, { diskStorage } from 'multer';
 
 
+
 const storage = diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === 'picture') {
@@ -27,7 +28,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
       return res.status(500).send({ message: "Error uploading files", error: err });
     }
 
-    const { name, description, datetime, locationId, categoryId, organizerId, availableSeats, price, eventType } = req.body;
+    const { name, description, datetime, locationId, categoryId, availableSeats, price, eventType } = req.body;
 
     // Type assertion for req.files
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -40,6 +41,8 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
     const thumbnailPath = thumbnailFile ? thumbnailFile.path : undefined;
 
     try {
+      const organizerId = req.user?.id;
+      console.log(`req.user--> ${req.user?.id}`)
       // Check if the user exists
       if (!organizerId || isNaN(parseInt(organizerId))) {
         return res.status(400).json({ error: 'Invalid organizer ID' });
@@ -68,8 +71,16 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
           availableSeats: parseInt(availableSeats),
           price: parseFloat(price),
           eventType: eventType,
+          
         },
       });
+
+      // await prisma.event.update({
+      //   where: { id: event.id },
+      //   data: {
+      //     organizer: { connect: { id: parseInt(organizerId) } }
+      //   }
+      // });
 
       return res.status(200).send({ message: "Event created successfully", data: event });
     } catch (err) {

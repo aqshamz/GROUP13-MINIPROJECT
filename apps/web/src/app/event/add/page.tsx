@@ -27,6 +27,7 @@ export default function EventAdd() {
   const [availableSeats, setAvailableSeats] = useState("");
   const [price, setPrice] = useState("");
   const [eventType, setEventType] = useState("");
+  const [organizerId, setOrganizerId] = useState("");
 
   const handleCreateEvent = async () => {
     try {
@@ -36,7 +37,7 @@ export default function EventAdd() {
       formData.append("datetime", datetime);
       formData.append("locationId", locationId);
       formData.append("categoryId", categoryId);
-      
+      formData.append("organizerId", organizerId);
       formData.append("availableSeats", availableSeats);
       formData.append("price", price);
       formData.append("eventType", eventType)
@@ -119,6 +120,14 @@ export default function EventAdd() {
                 onChange={(e) => setCategoryId(e.target.value)}
               />
             </FormControl>
+            {/* <FormControl>
+              <FormLabel>OrganizerId</FormLabel>
+              <Input
+                type="text"
+                value={organizerId}
+                onChange={(e) => setOrganizerId(e.target.value)}
+              />
+            </FormControl> */}
             
             <FormControl>
               <FormLabel>Available Seats</FormLabel>
