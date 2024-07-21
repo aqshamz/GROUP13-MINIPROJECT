@@ -12,6 +12,7 @@ import { createEvent,
       getCategoryById,
       getLocationById } from '@/controllers/event.controller';
 import { Router } from 'express';
+import { verifyToken, organizerGuard } from '@/middlewares/jwt.middleware';
 
 export class EventRouter {
   private router: Router;
@@ -35,7 +36,7 @@ export class EventRouter {
     this.router.get('/events', getAllEvents);
     this.router.get('/:id', getEventById);
     // this.router.get('/comments/:eventId', getCommentByEventId);
-    this.router.post('/add', createEvent);
+    this.router.post('/add', verifyToken, organizerGuard, createEvent);
     // this.router.post('/comments', createComment);
     // this.router.post('/:eventId/tickets', buyTicket);
   }
