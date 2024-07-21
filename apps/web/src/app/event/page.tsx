@@ -174,7 +174,7 @@ export default function Events({ events }: Props) {
                     <p className="text-xl font-semibold">{item.title}</p>
                     {item.thumbnail && (
                       <Image
-                        src={`http://localhost:5670/${formattedThumbnail}`}
+                        src={`http://localhost:8000/api/${formattedThumbnail}`}
                         alt={`${item.title} thumbnail`}
                         width={350} // Adjust width as needed
                         height={200} // Adjust height as needed
