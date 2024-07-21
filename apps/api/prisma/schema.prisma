@@ -112,6 +112,8 @@ model Event {
   location       Location   @relation(fields: [locationId], references: [id])
   description    String
   availableSeats Int
+  thumbnail      String
+  picture        String
   eventType      EventType
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
