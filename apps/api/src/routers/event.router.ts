@@ -26,7 +26,7 @@ export class EventRouter {
 
   private initializeRoutes(): void {
 
-    this.router.get('/categories', createEvent);
+    this.router.get('/categories', getAllCategories);
     this.router.get('/categories/:id', getCategoryById);
     this.router.get('/eventsByCategory', getEventsByCategory);
     this.router.get('/locations', getAllLocations);
