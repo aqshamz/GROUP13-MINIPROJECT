@@ -43,25 +43,19 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       next();
     } catch (err) {
       console.log(err);
-      res.status(500).send({
-        message: "error",
-        error: JSON.stringify(err),
-      });
+      return res.status(500).send("Please Login");
     }
   };
 
-// export const adminGuard = async (req:Request, res:Response, next:NextFunction) => {
-//     try {
-//         if(req.user?.role != "admin"){
-//             return res.status(401).send("Unauthorized")
-//         }
+export const organizerGuard = async (req:Request, res:Response, next:NextFunction) => {
+    try {
+        if(req.user?.role != "Organizer"){
+            return res.status(401).send("Unauthorized")
+        }
 
-//         next()
-//     } catch (error) {
-//         console.log(error)
-//         res.status(500).send({
-//             message:"error",
-//             error:(error as  Error).message
-//         })
-//     }
-// }
+        next()
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send("Please Login");
+    }
+}
