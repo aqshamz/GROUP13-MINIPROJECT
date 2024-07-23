@@ -1,14 +1,17 @@
 "use client"
 
 
-import { useEffect, useState, FormEvent} from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Text, Input, Button, Box, Textarea, Stack, Image } from '@chakra-ui/react';
-import { useParams } from 'next/navigation';
-import { getEventById, getCommentsByEventId, createComment, buyTicket, getCategoryById, getLocationById } from '@/api/event';
+import { useParams, usePathname } from 'next/navigation';
+import { getEventById, getCommentsByEventId, createComment, buyTicket, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
 import { Event, Comment, Location, Category } from '../../interfaces';
+import { getRoleFromCookie } from '@/utils/roleFromCookie'; 
+
 
 const EventPage = () => {
   const { id } = useParams();
+  const pathname = usePathname();
   const [event, setEvent] = useState<Event | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [userId, setUserId] = useState<string>('');
@@ -16,9 +19,14 @@ const EventPage = () => {
   const [loading, setLoading] = useState(true);
   const [commentLoading, setCommentLoading] = useState(false);
   const [ticketLoading, setTicketLoading] = useState(false);
+  const [discountCode, setDiscountCode] = useState<string>('');
+  const [discountResult, setDiscountResult] = useState<{ message: string, discountedPrice?: number } | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountApplied, setDiscountApplied] = useState(false);
   const [location, setLocation] = useState<Location | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const formattedThumbnail = event?.picture.replace(/\\/g, '/');
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventDetails = async (eventId: number) => {
@@ -27,16 +35,15 @@ const EventPage = () => {
         setEvent(response.data);
         const locationResponse = await getLocationById(response.data.locationId);
         setLocation(locationResponse);
-        
 
         const categoryResponse = await getCategoryById(response.data.categoryId);
         setCategory(categoryResponse);
-        console.log('category:', categoryResponse)
-        if (categoryResponse) {
-          console.log('Category Name:', categoryResponse.name);
-        }
-        const commentsResponse = await getCommentsByEventId(eventId);
-        setComments(commentsResponse.data);
+
+        // Fetch user role from cookie
+        const role = await getRoleFromCookie();
+        console.log('User Role:', role);
+        setUserRole(role);
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching event details:', error);
@@ -70,7 +77,6 @@ const EventPage = () => {
 
     try {
       const newComment = await createComment({ userId: parseInt(userId), eventId: parseInt(id as string), text: commentText });
-      // Update comments state to include the new comment
       setComments([...comments, newComment.data]);
       setCommentText('');
     } catch (error) {
@@ -85,22 +91,43 @@ const EventPage = () => {
 
     try {
       await buyTicket({ userId: parseInt(userId), eventId: parseInt(id as string) });
-      // Optionally update state or fetch updated event details
       console.log('Ticket purchased successfully');
       fetchEventDetails(parseInt(id as string));
     } catch (error) {
       console.error('Error purchasing ticket:', error);
-      // Handle error, display message, or retry logic
     } finally {
       setTicketLoading(false);
     }
   };
 
+  const handleApplyDiscount = async () => {
+    setDiscountLoading(true);
+
+    try {
+      const response = await applyEventDiscount(parseInt(id as string), discountCode);
+      setDiscountResult({
+        message: response.message,
+        discountedPrice: response.discountedPrice,
+      });
+      setDiscountApplied(true);
+    } catch (error: any) {
+      setDiscountResult({
+        message: error.response?.data?.error || 'An error occurred while applying the discount',
+      });
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
   const isEventInFuture = () => {
-    if (!event) return false; // If event data is not loaded yet
-    const eventDate = new Date(event.date); // Assuming event.date is the date field of the event
+    if (!event) return false;
+    const eventDate = new Date(event.date);
     const today = new Date();
     return eventDate > today;
+  };
+
+  const handleCreatePromotion = () => {
+    window.location.href = `${pathname}/discount`;
   };
 
   if (loading) {
@@ -112,26 +139,25 @@ const EventPage = () => {
   }
 
   return (
-    
     <div className="container mx-auto p-4 mb-20">
-    <Text as="h1" className="text-3xl font-bold mb-4">{event.title}</Text>
-    <Image
-        src={`http://localhost:5670/${formattedThumbnail}`}
-        alt={`${event.title} picture`}
-        width={350} // Adjust width as needed
-        height={200} // Adjust height as needed
+      <Text as="h1" className="text-3xl font-bold mb-4">{event.name}</Text>
+      <Image
+        src={`http://localhost:8000/${formattedThumbnail}`}
+        alt={`${event.name} picture`}
+        width={350}
+        height={200}
         className="rounded-md my-2"
-    />
-    <Text className="text-lg mb-2">{event.description}</Text>
-    <Text className="text-lg mb-4">Date: {event.date}</Text>
-    <Text className="text-lg mb-2">Location: {location ? location.name : 'Loading...'}</Text>
+      />
+      <Text className="text-lg mb-2">{event.description}</Text>
+      <Text className="text-lg mb-4">Date: {event.datetime}</Text>
+      <Text className="text-lg mb-2">Location: {location ? location.name : 'Loading...'}</Text>
       <Text className="text-lg mb-2">Category: {category ? category.name : 'Loading...'}</Text>
       {!isEventInFuture() && (
         <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
       )}
-    <Text className="text-lg mb-4">Price: Rp{event.price}</Text>
+      <Text className="text-lg mb-4">Price: Rp{event.price}</Text>
 
-    {isEventInFuture() ? (
+      {isEventInFuture() ? (
         <div className="mb-4">
           <Input
             placeholder="Enter Your User ID"
@@ -189,6 +215,35 @@ const EventPage = () => {
         </>
       )}
 
+      <div className="mb-4">
+        <Input
+          placeholder="Enter Discount Code"
+          value={discountCode}
+          onChange={(e) => setDiscountCode(e.target.value)}
+          required
+          className="mb-2 p-2 border rounded"
+        />
+        <Button
+          onClick={handleApplyDiscount}
+          isLoading={discountLoading}
+          disabled={discountLoading || discountApplied}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          {discountApplied ? 'Discount Applied' : 'Redeem Discount'}
+        </Button>
+        {discountResult && (
+          <Text className="mt-2">
+            {discountResult.message}
+            {discountResult.discountedPrice && ` Discounted Price: Rp${discountResult.discountedPrice}`}
+          </Text>
+        )}
+      </div>
+
+      {userRole === 'Organizer' && (
+        <Button onClick={handleCreatePromotion} className="bg-blue-500 text-white px-4 py-2 rounded">
+          Create Promotion
+        </Button>
+      )}
     </div>
   );
 };

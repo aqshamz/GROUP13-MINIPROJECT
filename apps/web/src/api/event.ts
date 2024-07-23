@@ -156,6 +156,32 @@ export async function createEvent(formData: FormData) {
   }
 }
 
+interface CreateDiscountParams {
+  eventId: number;
+  code: string;
+  discountPercentage: number;
+  validFrom: string;
+  validTo: string;
+}
+
+export const createDiscount = async (params: CreateDiscountParams) => {
+  const { eventId, code, discountPercentage, validFrom, validTo } = params;
+  const response = await axios.post(`${base_api}/event/events/${eventId}/discounts`, {
+    code,
+    discountPercentage,
+    validFrom,
+    validTo,
+  });
+  return response.data;
+};
+
+export const applyEventDiscount = async (eventId: number, code: string) => {
+  const response = await axios.post(`${base_api}/event/events/${eventId}/apply-discount`, {
+    code,
+  });
+  return response.data;
+};
+
 // export async function getCommentsByEventId(eventId: number): Promise<{ data: Comment[] }> {
 //   try {
 //     const res = await axios.get<{ data: Comment[] }>(`${base_api}/event/comments/${eventId}`);
