@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Text, UnorderedList, ListItem, Select, Button, Box, Image, Input  } from "@chakra-ui/react";
 import { getAllEvents, getAllCategories, getEventsByCategory, getAllLocations, getEventsByLocation, getEventsByCategoryAndLocation} from "@/api/event";
 import { Event, Category } from "../interfaces";
-
+import { getRoleFromCookie } from '@/utils/roleFromCookie'; 
 
 import Link from "next/link";
 
@@ -23,12 +23,14 @@ export default function Events({ events }: Props) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalEvents, setTotalEvents] = useState(0); 
+  const [userRole, setUserRole] = useState<string | null>(null);
   const pageSize = 5; // Number of events per page
 
   useEffect(() => {
     handleGetEvents();
     handleGetCategories();
     handleGetLocations();
+    fetchUserRole(); 
   }, [page]);
 
   useEffect(() => {
@@ -36,7 +38,11 @@ export default function Events({ events }: Props) {
   }, [selectedCategory, selectedLocation]);
   
 
-  
+  const fetchUserRole = async () => {
+    const role = await getRoleFromCookie();
+    console.log('User Role:', role); // Log the retrieved role
+    setUserRole(role);
+  };
 
   const handleGetEvents = async () => {
     try {
@@ -130,7 +136,11 @@ export default function Events({ events }: Props) {
     <div className="container mx-auto p-4 mb-20">
       <Text as="h1" className="text-3xl font-bold mb-4">Events</Text>
       <hr className="mb-4" />
-
+      {userRole === 'Organizer' && (
+        <Link href="/event/add">
+          <Button className="bg-blue-500 text-white px-4 py-2 rounded mb-4">Create Event</Button>
+        </Link>
+      )}
       <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4">
       <Select placeholder="Select category" onChange={handleCategoryChange} className="mb-2 sm:mb-0 sm:w-1/2">
         <option value="">All Categories</option>

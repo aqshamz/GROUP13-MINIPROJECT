@@ -6,7 +6,7 @@ import { Text, Input, Button, Box, Textarea, Stack, Image } from '@chakra-ui/rea
 import { useParams, usePathname } from 'next/navigation';
 import { getEventById, getCommentsByEventId, createComment, buyTicket, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
 import { Event, Comment, Location, Category } from '../../interfaces';
-import { getRoleFromCookie } from '../utils/getCookie';
+import { getRoleFromCookie } from '@/utils/roleFromCookie'; 
 
 
 const EventPage = () => {
@@ -39,10 +39,7 @@ const EventPage = () => {
         const categoryResponse = await getCategoryById(response.data.categoryId);
         setCategory(categoryResponse);
 
-        // const commentsResponse = await getCommentsByEventId(eventId);
-        // setComments(commentsResponse.data);
-
-        // Fetch user role from local storage
+        // Fetch user role from cookie
         const role = await getRoleFromCookie();
         console.log('User Role:', role);
         setUserRole(role);
