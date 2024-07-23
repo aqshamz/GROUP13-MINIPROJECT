@@ -24,6 +24,7 @@ const base_api = "http://localhost:8000/api";
 export const login = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${base_api}/users/login`, { email, password });
+    
     return response.data;
   } catch (error) {
     throw new Error('Login failed');

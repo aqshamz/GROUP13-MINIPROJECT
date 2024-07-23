@@ -98,7 +98,7 @@ export class UserController {
 
         const jwtPayload = { id:login.id, username:login.username, email:email, role:login.role }
         const token = await sign(jwtPayload, "mySecretKey", { expiresIn: '1h' })
-
+      
         return res.status(200).send({
             message:"Success",
             data: login,

@@ -8,6 +8,7 @@ import express, {
   Router,
 } from 'express';
 import cors from 'cors';
+import path from 'path';
 import { PORT } from './config';
 import { EventRouter } from './routers/event.router';
 import { UserRouter } from './routers/user.router';
@@ -28,6 +29,7 @@ export default class App {
     this.app.use(cors());
     this.app.use(json());
     this.app.use(urlencoded({ extended: true }));
+    this.app.use('/public', express.static(path.join(__dirname, '../public')));
   }
 
   private handleError(): void {

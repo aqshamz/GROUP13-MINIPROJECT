@@ -13,6 +13,7 @@ import {
   FormLabel,
   Textarea,
 } from "@chakra-ui/react";
+import { useParams } from 'next/navigation';
 import { createEvent } from "@/api/event";
 
 export default function EventAdd() {
@@ -50,6 +51,7 @@ export default function EventAdd() {
 
       const response = await createEvent(formData);
       console.log("Event created successfully:", response.data);
+      window.location.href = `/event`;
       // Optionally, you can redirect or show a success message here
     } catch (error) {
       console.error("Error creating event:", error);
@@ -120,14 +122,7 @@ export default function EventAdd() {
                 onChange={(e) => setCategoryId(e.target.value)}
               />
             </FormControl>
-            {/* <FormControl>
-              <FormLabel>OrganizerId</FormLabel>
-              <Input
-                type="text"
-                value={organizerId}
-                onChange={(e) => setOrganizerId(e.target.value)}
-              />
-            </FormControl> */}
+          
             
             <FormControl>
               <FormLabel>Available Seats</FormLabel>

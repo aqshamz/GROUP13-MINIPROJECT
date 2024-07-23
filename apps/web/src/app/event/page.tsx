@@ -166,16 +166,17 @@ export default function Events({ events }: Props) {
           eventData.map((item: Event) => {
             
             const formattedThumbnail = item.thumbnail.replace(/\\/g, '/');
-            
+            const encodedThumbnail = formattedThumbnail.split('/').map(encodeURIComponent).join('/');
+            console.log(`formatted thumbnail: http://localhost:8000/api/${encodedThumbnail}`);
             return (
               <ListItem key={item.id} className="border p-4 rounded-md shadow-md flex flex-col items-center text-center">
                 <Link href={`/event/${item.id}`}>
                   <div className="flex flex-col items-center">
-                    <p className="text-xl font-semibold">{item.title}</p>
+                    <p className="text-xl font-semibold">{item.name}</p>
                     {item.thumbnail && (
                       <Image
-                        src={`http://localhost:8000/api/${formattedThumbnail}`}
-                        alt={`${item.title} thumbnail`}
+                        src={`http://localhost:8000/${encodedThumbnail}`}
+                        alt={`${item.name} thumbnail`}
                         width={350} // Adjust width as needed
                         height={200} // Adjust height as needed
                         className="rounded-md my-2"
