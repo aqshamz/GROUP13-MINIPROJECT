@@ -75,12 +75,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
         },
       });
 
-      // await prisma.event.update({
-      //   where: { id: event.id },
-      //   data: {
-      //     organizer: { connect: { id: parseInt(organizerId) } }
-      //   }
-      // });
+      
 
       return res.status(200).send({ message: "Event created successfully", data: event });
     } catch (err) {
@@ -103,7 +98,7 @@ export const getAllEvents = async (req: Request, res: Response) => {
   try {
     const where: any = {
       OR: query ? [
-        { title: { contains: query } },
+        { name: { contains: query } },
         { description: { contains: query } }
       ] : undefined,
     };
@@ -393,6 +388,264 @@ export const getEventsByCategoryAndLocation = async (req: Request, res: Response
     });
   }
 };
+
+export const createEventDiscount = async (req: Request, res: Response): Promise<void> => {
+  const { eventId } = req.params; // Get eventId from URL parameters
+  const { code, discountPercentage, validFrom, validTo } = req.body;
+
+  try {
+    // Validate the input
+    if (!eventId || isNaN(parseInt(eventId))) {
+      res.status(400).json({ error: 'Invalid event ID' });
+      return;
+    }
+    if (!code || typeof code !== 'string') {
+      res.status(400).json({ error: 'Invalid discount code' });
+      return;
+    }
+    if (!discountPercentage || isNaN(parseInt(discountPercentage)) || parseInt(discountPercentage) <= 0) {
+      res.status(400).json({ error: 'Invalid discount percentage' });
+      return;
+    }
+    if (!validFrom || isNaN(Date.parse(validFrom))) {
+      res.status(400).json({ error: 'Invalid validFrom date' });
+      return;
+    }
+    if (!validTo || isNaN(Date.parse(validTo))) {
+      res.status(400).json({ error: 'Invalid validTo date' });
+      return;
+    }
+
+    // Check if the event exists
+    const eventExists = await prisma.event.findUnique({
+      where: {
+        id: parseInt(eventId),
+      },
+    });
+
+    if (!eventExists) {
+      res.status(400).send({ message: "Event does not exist" });
+      return;
+    }
+
+    // Create the event discount
+    const eventDiscount = await prisma.eventDiscount.create({
+      data: {
+        eventId: parseInt(eventId),
+        code: String(code),
+        discountPercentage: parseInt(discountPercentage),
+        validFrom: new Date(String(validFrom)),
+        validTo: new Date(String(validTo)),
+      },
+    });
+
+    res.status(200).send({ message: "Event discount created successfully", data: eventDiscount });
+  } catch (err) {
+    console.error("Error creating event discount:", err);
+    res.status(500).send({ message: "Error creating event discount", error: err });
+  }
+};
+
+// export const applyEventDiscount = async (req: Request, res: Response): Promise<void> => {
+//   const { eventId } = req.params;
+//   const { code } = req.body;
+
+//   try {
+//     // Validate the input
+//     if (!eventId || isNaN(parseInt(eventId))) {
+//       res.status(400).json({ error: 'Invalid event ID' });
+//       return;
+//     }
+//     if (!code || typeof code !== 'string') {
+//       res.status(400).json({ error: 'Invalid discount code' });
+//       return;
+//     }
+
+//     // Check if the event exists
+//     const event = await prisma.event.findUnique({
+//       where: {
+//         id: parseInt(eventId),
+//       },
+//     });
+
+//     if (!event) {
+//       res.status(400).send({ message: "Event does not exist" });
+//       return;
+//     }
+
+//     // Check if the discount code is valid for the event
+//     const eventDiscount = await prisma.eventDiscount.findFirst({
+//       where: {
+//         eventId: parseInt(eventId),
+//         code: code,
+//         validFrom: { lte: new Date() },
+//         validTo: { gte: new Date() },
+//       },
+//     });
+
+//     if (!eventDiscount) {
+//       res.status(400).send({ message: "Invalid or expired discount code" });
+//       return;
+//     }
+
+//     // Calculate the discounted price
+//     const discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
+//     const discountedPrice = event.price.toNumber() - discountAmount;
+
+//     res.status(200).send({
+//       message: "Discount applied successfully",
+//       originalPrice: event.price,
+//       discountPercentage: eventDiscount.discountPercentage,
+//       discountedPrice: discountedPrice,
+//     });
+//   } catch (err) {
+//     console.error("Error applying discount:", err);
+//     res.status(500).send({ message: "Error applying discount", error: err });
+//   }
+// };
+
+export const applyEventDiscount = async (req: Request, res: Response): Promise<void> => {
+  const { eventId } = req.params;
+  const { code } = req.body;
+
+  try {
+    if (!eventId || isNaN(parseInt(eventId))) {
+      res.status(400).json({ error: 'Invalid event ID' });
+      return;
+    }
+
+    const currentDate = new Date();
+
+    const eventDiscount = await prisma.eventDiscount.findFirst({
+      where: {
+        eventId: parseInt(eventId),
+        code: code,
+        validFrom: {
+          lte: currentDate,
+        },
+        validTo: {
+          gte: currentDate,
+        },
+      },
+    });
+
+    if (!eventDiscount) {
+      res.status(400).json({ error: 'Invalid or expired discount code' });
+      return;
+    }
+
+    const event = await prisma.event.findUnique({
+      where: {
+        id: parseInt(eventId),
+      },
+    });
+
+    if (!event) {
+      res.status(400).send({ message: "Event does not exist" });
+      return;
+    }
+
+    const discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
+    const discountedPrice = event.price.toNumber() - discountAmount;
+
+    res.status(200).json({ 
+      message: 'Discount applied successfully', 
+      discount: eventDiscount, 
+      discountedPrice 
+    });
+  } catch (err) {
+    console.error("Error applying discount:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Buy Ticket
+export const buyTicket = async (req: Request, res: Response): Promise<void> => {
+  const { eventId } = req.params;
+  const { pointAmount, discountCode } = req.body;
+
+  try {
+    if (!eventId || isNaN(parseInt(eventId))) {
+      res.status(400).json({ error: 'Invalid event ID' });
+      return;
+    }
+
+    const userId = req.user?.id;
+    if (!userId || isNaN(parseInt(userId))) {
+      res.status(400).json({ error: 'Invalid user ID' });
+      return;
+    }
+
+    const event = await prisma.event.findUnique({
+      where: {
+        id: parseInt(eventId),
+      },
+    });
+
+    if (!event) {
+      res.status(400).send({ message: "Event does not exist" });
+      return;
+    }
+
+    let discountAmount = 0;
+
+    if (discountCode) {
+      const currentDate = new Date();
+
+      const eventDiscount = await prisma.eventDiscount.findFirst({
+        where: {
+          eventId: parseInt(eventId),
+          code: discountCode,
+          validFrom: {
+            lte: currentDate,
+          },
+          validTo: {
+            gte: currentDate,
+          },
+        },
+      });
+
+      console.log("Event Discount:", eventDiscount);
+
+      if (eventDiscount) {
+        console.log(`Event Price: ${event.price.toNumber()}`);
+        console.log(`Discount Percentage: ${eventDiscount.discountPercentage}`);
+        discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
+        console.log("Discount Amount:", discountAmount);
+      } else {
+        console.log("No valid discount found for the provided code.");
+        
+      }
+    }
+
+    const totalAmount = event.price.toNumber();
+    const pointAmountValue = pointAmount ? parseFloat(pointAmount) : 0;
+    const finalAmount = totalAmount - discountAmount - pointAmountValue;
+
+    console.log("Total Amount:", totalAmount);
+    console.log("Point Amount Value:", pointAmountValue);
+    console.log("Final Amount:", finalAmount);
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        userId: parseInt(userId), // Parse userId to integer
+        eventId: parseInt(eventId),
+        totalAmount: totalAmount,
+        pointAmount: pointAmountValue,
+        discountAmount: discountAmount,
+        finalAmount: finalAmount,
+        status: "Pending",
+      },
+    });
+
+    res.status(200).send({ message: "Ticket purchased successfully", data: transaction });
+  } catch (err) {
+    console.error("Error purchasing ticket:", err);
+    res.status(500).send({ message: "Error purchasing ticket", error: err });
+  }
+};
+
+
 
 // export const createComment = async (req: Request, res: Response): Promise<void> => {
 //   const { userId, eventId, text } = req.body;
