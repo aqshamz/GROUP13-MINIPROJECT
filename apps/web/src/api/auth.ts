@@ -5,21 +5,9 @@ import { cookies } from "next/headers";
 
 const base_api = "http://localhost:8000/api";
 
-// export function login(email: string, password: string) {
-//   console.log("Attempting login with email:", email);
-//   try {
-//     // Simulate a response
-//     const res = await axios.post(`${base_api}/users/login`, {
-//       email,
-//       password,
-//     });
-//     console.log("Login API response:", res);
-//     return res;
-//   } catch (error) {
-//     console.error("Error logging in:", error);
-//     throw error;
-//   }
-// }
+interface ValidationError {
+  msg: string;
+}
 
 export const login = async (email: string, password: string) => {
   try {
@@ -28,5 +16,24 @@ export const login = async (email: string, password: string) => {
     return response.data;
   } catch (error) {
     throw new Error('Login failed');
+  }
+};
+
+export const register = async (username: string, email: string, password: string, role: string, referralCode: string) => {
+  try {
+    const response = await axios.post(`${base_api}/users`, { username, password, email, role, ...(referralCode && { referralCode })  });
+    return response.data;
+  } catch (error) {
+    console.log(error)
+    let message = "Register failed";
+    if (axios.isAxiosError(error) && error.response) {
+      if (Array.isArray(error.response.data.errors)) {
+        const errors: ValidationError[] = error.response.data.errors;
+        message = errors.map((err: ValidationError) => err.msg).join(', ');
+      } else {
+        message = error.response.data.message;
+      }
+    }
+    throw new Error(message);
   }
 };

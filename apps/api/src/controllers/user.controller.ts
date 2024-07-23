@@ -65,7 +65,7 @@ export class UserController {
         }
       }
       // update referral
-      res.status(201).json(user); // User created successfully
+      res.status(201).json({ message: "Success Create Account" }); // User created successfully
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: (error as Error).message }); // Handle other errors

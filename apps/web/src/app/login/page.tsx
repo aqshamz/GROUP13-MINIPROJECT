@@ -52,7 +52,7 @@ const LoginPage = () => {
             </FormControl>
             <FormControl mt={4}>
               <Button color={"blue.500"} type="submit">
-                Submit
+                Login
               </Button>
             </FormControl>
           </CardBody>

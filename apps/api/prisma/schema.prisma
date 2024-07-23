@@ -142,9 +142,6 @@ model Ticket {
   eventId     Int
   attendee    User          @relation(fields: [attendeeId], references: [id])
   attendeeId  Int
-  price       Decimal       @db.Decimal(10, 2)
-  ticketType  String?
-  status      TicketStatus
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -157,7 +154,8 @@ model Comment {
   transactionId Int
   attendee      User        @relation(fields: [attendeeId], references: [id])
   attendeeId    Int
-  text       String
+  rating        Decimal     @db.Decimal(10, 2)
+  text          String
   createdAt     DateTime    @default(now())
 
   @@map("comments")
@@ -183,6 +181,7 @@ model Transaction {
   userId          Int
   event           Event               @relation(fields: [eventId], references: [id])
   eventId         Int
+  ticketAmount    Int
   totalAmount     Decimal             @db.Decimal(10, 2)
   pointAmount     Decimal             @db.Decimal(10, 2)
   discountAmount  Decimal             @db.Decimal(10, 2)
