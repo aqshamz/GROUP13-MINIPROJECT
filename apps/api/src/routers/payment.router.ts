@@ -1,6 +1,6 @@
 import { PaymentController } from '@/controllers/payment.controller';
 import { Router } from 'express';
-import { verifyToken } from '@/middlewares/jwt.middleware';
+import { verifyToken, customerGuard } from '@/middlewares/jwt.middleware';
 
 export class PaymentRouter {
   private router: Router;
@@ -15,6 +15,8 @@ export class PaymentRouter {
   private initializeRoutes(): void {
     this.router.get('/points', verifyToken, this.paymentController.getUserPointsData);
     this.router.get('/discounts', verifyToken, this.paymentController.getUserDiscountData);
+    this.router.post('/order', verifyToken, customerGuard, this.paymentController.createTransaction);
+    this.router.post('/transaction', verifyToken, customerGuard, this.paymentController.finishTransaction);
   }
 
   getRouter(): Router {

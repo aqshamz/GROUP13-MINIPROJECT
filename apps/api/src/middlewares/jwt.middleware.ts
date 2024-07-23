@@ -59,3 +59,16 @@ export const organizerGuard = async (req:Request, res:Response, next:NextFunctio
         return res.status(500).send("Please Login");
     }
 }
+
+export const customerGuard = async (req:Request, res:Response, next:NextFunction) => {
+  try {
+      if(req.user?.role != "Customer"){
+          return res.status(401).send("Unauthorized")
+      }
+
+      next()
+  } catch (error) {
+      console.log(error)
+      return res.status(500).send("Please Login");
+  }
+}

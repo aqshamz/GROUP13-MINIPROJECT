@@ -183,7 +183,7 @@ model Transaction {
   eventId         Int
   ticketAmount    Int
   totalAmount     Decimal             @db.Decimal(10, 2)
-  pointAmount     Decimal             @db.Decimal(10, 2)
+  pointAmount     Int             
   discountAmount  Decimal             @db.Decimal(10, 2)
   finalAmount     Decimal             @db.Decimal(10, 2)
   status          TransactionStatus
