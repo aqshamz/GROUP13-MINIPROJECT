@@ -12,8 +12,7 @@ import { createEvent,
       getCategoryById,
       getLocationById,
       createEventDiscount, 
-      applyEventDiscount,
-    buyTicket } from '@/controllers/event.controller';
+      applyEventDiscount } from '@/controllers/event.controller';
 import { Router } from 'express';
 import { verifyToken, organizerGuard } from '@/middlewares/jwt.middleware';
 
@@ -42,7 +41,7 @@ export class EventRouter {
     this.router.post('/add', verifyToken, organizerGuard, createEvent);
     this.router.post('/events/:eventId/discounts', createEventDiscount);
     this.router.post('/events/:eventId/apply-discount', applyEventDiscount);
-    this.router.post('/events/:eventId/tickets', verifyToken, buyTicket);
+    // this.router.post('/events/:eventId/tickets', verifyToken, buyTicket);
     // this.router.post('/comments', createComment);
     // this.router.post('/:eventId/tickets', buyTicket);
   }
