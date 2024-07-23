@@ -15,7 +15,7 @@ export class UserController {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() }); // Return validation errors
+      return res.status(400).json({ errors: errors.array() }); 
     }
 
     const { username, password, email, role, referralCode } = req.body;
@@ -65,10 +65,10 @@ export class UserController {
         }
       }
       // update referral
-      res.status(201).json({ message: "Success Create Account" }); // User created successfully
+      res.status(201).json({ message: "Success Create Account" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: (error as Error).message }); // Handle other errors
+      res.status(500).json({ message: (error as Error).message }); 
     }
   }
 
