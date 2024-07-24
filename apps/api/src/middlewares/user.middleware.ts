@@ -48,9 +48,8 @@ export const checkUserExists = async (req: Request, res: Response, next: NextFun
 export const checkReferralCode = async (req: Request, res: Response, next: NextFunction) => {
   const { referralCode } = req.body;
 
-  // Handle empty referral code
   if (!referralCode) {
-    return next(); // If referral code is empty, skip the check and proceed
+    return next();
   }
 
   try {
@@ -79,7 +78,7 @@ export const createUser = async (req: Request, res: Response) => {
 
   try {
     const user = await prisma.user.create({
-      data: { username, email, password, role, referralCode }, // Include referralCode if provided
+      data: { username, email, password, role, referralCode }, 
     });
 
     res.status(201).json(user);

@@ -14,7 +14,6 @@ export class UserRouter {
 
   private initializeRoutes(): void {
     this.router.get('/', this.userController.getUsersData);
-    // this.router.get('/:id', this.userController.getSampleDataById);
     this.router.post('/', validateCreateUser, checkUserExists, checkReferralCode, this.userController.createUserData);
     this.router.post('/login', loginAttempt, this.userController.loginUser);
   }
