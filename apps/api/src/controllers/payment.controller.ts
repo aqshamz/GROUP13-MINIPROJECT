@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '@/prisma';
 import { validationResult } from 'express-validator';
 import { sign } from "jsonwebtoken"
-import { Decimal } from 'decimal.js';
+
 
 export class PaymentController {
     async getUserPointsData(req: Request, res: Response) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -12,9 +12,13 @@ import {
   FormControl,
   FormLabel,
   Textarea,
+  Checkbox,
+  Select
 } from "@chakra-ui/react";
 import { useParams } from 'next/navigation';
-import { createEvent } from "@/api/event";
+import { createEvent, getAllCategories, getAllLocations } from "@/api/event";
+import { Category, Location } from "../../interfaces";
+
 
 export default function EventAdd() {
   const [name, setName] = useState("");
@@ -27,8 +31,33 @@ export default function EventAdd() {
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [availableSeats, setAvailableSeats] = useState("");
   const [price, setPrice] = useState("");
-  const [eventType, setEventType] = useState("");
+  const [eventType, setEventType] = useState<"Free" | "Paid">("Free");
   const [organizerId, setOrganizerId] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  useEffect(() => {
+    handleGetCategories();
+    handleGetLocations();
+  }, []);
+
+  const handleGetCategories = async () => {
+    try {
+      const response = await getAllCategories();
+      setCategories(response.data); // Assuming response.data is the array of categories
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  const handleGetLocations = async () => {
+    try {
+      const response = await getAllLocations();
+      setLocations(response.data); // Assuming response.data is the array of locations
+    } catch (error) {
+      console.error("Failed to fetch locations:", error);
+    }
+  };
 
   const handleCreateEvent = async () => {
     try {
@@ -40,8 +69,8 @@ export default function EventAdd() {
       formData.append("categoryId", categoryId);
       formData.append("organizerId", organizerId);
       formData.append("availableSeats", availableSeats);
-      formData.append("price", price);
-      formData.append("eventType", eventType)
+      formData.append("eventType", eventType);
+      formData.append("price", eventType === "Free" ? "0" : price);
       if (picture) {
         formData.append("picture", picture);
       }
@@ -73,6 +102,25 @@ export default function EventAdd() {
     }
   };
 
+  const handleEventTypeChange = (type: "Free" | "Paid") => {
+    setEventType(type);
+    if (type === "Free") {
+      setPrice("0");
+    } else {
+      setPrice(""); // Clear the price field if changing to Paid
+    }
+  };
+
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const categoryId = event.target.value ? parseInt(event.target.value) : null;
+    setCategoryId(categoryId);
+  };
+
+  const handleLocationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const locationId = event.target.value ? parseInt(event.target.value) : null;
+    setLocationId(locationId);
+  };
+
   return (
     <Container>
       <Text as={"h1"}> Event Add </Text>
@@ -101,43 +149,40 @@ export default function EventAdd() {
             <FormControl>
               <FormLabel>Date</FormLabel>
               <Input
-                type="text"
+                type="date"
+                placeholder="Event Date"
                 value={datetime}
                 onChange={(e) => setDateTime(e.target.value)}
               />
             </FormControl>
             <FormControl>
-              <FormLabel>LocationId</FormLabel>
-              <Input
-                type="text"
-                value={locationId}
-                onChange={(e) => setLocationId(e.target.value)}
-              />
+              <FormLabel>Location</FormLabel>
+              <Select placeholder="Select location" onChange={handleLocationChange}>
+                
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name}
+                  </option>
+                ))}
+              </Select>
             </FormControl>
             <FormControl>
-              <FormLabel>CategoryId</FormLabel>
-              <Input
-                type="text"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              />
+              <FormLabel>Category</FormLabel>
+              <Select placeholder="Select category" onChange={handleCategoryChange}>
+                
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </Select>
             </FormControl>
-          
-            
             <FormControl>
               <FormLabel>Available Seats</FormLabel>
               <Input
                 type="text"
                 value={availableSeats}
                 onChange={(e) => setAvailableSeats(e.target.value)}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Price</FormLabel>
-              <Input
-                type="text"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
               />
             </FormControl>
             <FormControl>
@@ -150,13 +195,29 @@ export default function EventAdd() {
             </FormControl>
             <FormControl>
               <FormLabel>Event Type</FormLabel>
-              <Input
-                type="text"
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value)}
-              />
+              <Checkbox
+                isChecked={eventType === "Free"}
+                onChange={() => handleEventTypeChange("Free")}
+              >
+                Free
+              </Checkbox>
+              <Checkbox
+                isChecked={eventType === "Paid"}
+                onChange={() => handleEventTypeChange("Paid")}
+              >
+                Paid
+              </Checkbox>
             </FormControl>
-
+            {eventType === "Paid" && (
+              <FormControl>
+                <FormLabel>Price</FormLabel>
+                <Input
+                  type="text"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </FormControl>
+            )}
             <FormControl>
               <Button color={"blue.500"} onClick={handleCreateEvent}>
                 Submit

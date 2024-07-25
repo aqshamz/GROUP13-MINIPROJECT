@@ -74,7 +74,11 @@ export async function getEventsByCategory(categoryId: number, page: number, page
     return res.data;
   } catch (error) {
     console.error("Error fetching events by category:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      // Provide detailed error information
+      throw new Error(`${error.response.data.message || error.message}`);
+    }
+    throw new Error("An unexpected error occurred.");
   }
 }
 
@@ -109,7 +113,11 @@ export async function getEventsByLocation(locationId: number, page: number, page
     return res.data;
   } catch (error) {
     console.error("Error fetching events by location:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      // Provide detailed error information
+      throw new Error(`${error.response.data.message || error.message}`);
+    }
+    throw new Error("An unexpected error occurred.");
   }
 }
 
@@ -129,9 +137,14 @@ export async function getEventsByCategoryAndLocation(
     return res.data;
   } catch (error) {
     console.error("Error fetching events by category and location:", error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      // Provide detailed error information
+      throw new Error(`${error.response.data.message || error.message}`);
+    }
+    throw new Error("An unexpected error occurred.");
   }
-}
+  }
+
 
 export async function createEvent(formData: FormData) {
   try {
