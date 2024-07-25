@@ -17,6 +17,7 @@ export class PaymentRouter {
     this.router.get('/discounts', verifyToken, this.paymentController.getUserDiscountData);
     this.router.post('/order', verifyToken, customerGuard, this.paymentController.createTransaction);
     this.router.post('/transaction', verifyToken, customerGuard, this.paymentController.finishTransaction);
+    this.router.get('/transaction', verifyToken, customerGuard, this.paymentController.getTransactionData);
   }
 
   getRouter(): Router {
