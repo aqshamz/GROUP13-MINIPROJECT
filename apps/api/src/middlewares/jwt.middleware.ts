@@ -18,11 +18,11 @@ declare global {
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("AUTHORIZATION HEADER => ", req.header("Authorization"));
+      // console.log("AUTHORIZATION HEADER => ", req.header("Authorization"));
   
       const token = req.header("Authorization")?.replace("Bearer ", "");
   
-      console.log("token --> ", token);
+      // console.log("token --> ", token);
   
       if (!token) {
         return res.status(401).send("Unauthorized");

@@ -23,6 +23,7 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
+    "crypto": "^1.0.1",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.4.5",
     "dotenv-cli": "^7.4.2",
