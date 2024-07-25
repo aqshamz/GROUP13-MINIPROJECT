@@ -3,8 +3,12 @@ import prisma from '@/prisma';
 import { validationResult } from 'express-validator';
 import { sign } from "jsonwebtoken"
 
+import { Decimal } from 'decimal.js';
+import { TransactionStatus } from '@prisma/client';
+import crypto from 'crypto';
 
 export class PaymentController {
+  
     async getUserPointsData(req: Request, res: Response) {
     const today = new Date();
       try {
@@ -61,6 +65,38 @@ export class PaymentController {
       }
     }
 
+    async getTransactionData(req: Request, res: Response) {
+      const today = new Date();
+        try {
+          const user = req.user;
+    
+          if (!user) {
+            return res.status(401).send("Unauthorized");
+          }
+    
+            const transactionData = await prisma.transaction.findMany({
+              include: {
+                event: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+              where: {
+                userId: parseInt(user.id),
+              },
+            });
+    
+          return res.status(200).send({
+            message: "Success",
+            data: transactionData,
+          });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: (error as Error).message });
+        }
+      }
+
     async createTransaction(req: Request, res: Response) {
       // const errors = validationResult(req);
   
@@ -73,7 +109,7 @@ export class PaymentController {
         throw new Error('Unauthorized');
       }
       
-      const { eventId, ticketAmount, totalAmount, pointAmount, discountAmount, finalAmount } = req.body;
+      const { eventId, ticketAmount, totalAmount, pointAmount, discountAmount, finalAmount, discountId } = req.body;
   
       try {
         const transaction = await prisma.transaction.create({
@@ -92,6 +128,21 @@ export class PaymentController {
           throw new Error('Error creating transactions');
         }
 
+        if(discountId){
+          const discount = await prisma.userDiscount.update({
+          data:{
+            status:"Used",
+          },
+          where: {
+              id: parseInt(discountId)
+          }
+          })
+  
+          if(!discount){
+            throw new Error('Error creating transactions');
+          }
+        }
+
         res.status(201).json({ message: "Success Order Tickets" });
       } catch (error) {
         console.error(error);
@@ -106,19 +157,26 @@ export class PaymentController {
         throw new Error('Unauthorized');
       }
       
-      const { id, status, discountUser } = req.body;
+      const { id, type } = req.body;
   
       try {
-
+        let status;
+        if(type == 1){
+          status = TransactionStatus.Completed;
+        }
+        else{
+          status = TransactionStatus.Cancelled;
+        }
         // transaction
         const transaction = await prisma.transaction.update({
             data:{
-                status,
+                status:status,
             },
             where: {
                 id: parseInt(id)
             }
         })
+        console.log("transaction")
         // transaction
   
         if(!transaction){
@@ -137,20 +195,20 @@ export class PaymentController {
 
         if(status === "Completed"){
           //discount
-          if(parseInt(discountUser) !== 0){
-            const discount = await prisma.userDiscount.update({
-                data:{
-                    status:"Used",
-                },
-                where: {
-                    id: parseInt(discountUser)
-                }
-            })
+          // if(parseInt(discountUser) !== 0){
+          //   const discount = await prisma.userDiscount.update({
+          //       data:{
+          //           status:"Used",
+          //       },
+          //       where: {
+          //           id: parseInt(discountUser)
+          //       }
+          //   })
   
-            if(!discount){
-              throw new Error('Error Payment');
-            }
-          }
+          //   if(!discount){
+          //     throw new Error('Error Payment');
+          //   }
+          // }
   
           // point
           const today = new Date();
@@ -212,6 +270,22 @@ export class PaymentController {
           if(!cutSeat){
             throw new Error('Error Payment');
           }
+
+           // make ticket
+          for(let i = 0; i < ticketAmount; i++){
+            const timestamp = Date.now().toString(36); // Convert current timestamp to a base-36 string
+            const randomString = crypto.randomBytes(4).toString('hex');
+            let credentials = `${timestamp}-${randomString}`;
+            let ticket = await prisma.ticket.create({
+              data: { 
+                eventId: Number(eventId), 
+                attendeeId: Number(user.id),
+                credentials
+              },
+            });
+        
+          }
+
 
         }
 
