@@ -45,3 +45,18 @@ export interface Event {
     email: string;
     
   }
+
+  export interface Transaction {
+    id: number;
+    userId: number;
+    eventId: number;
+    ticketAmount: number;
+    totalAmount: number; 
+    pointAmount: number;
+    discountAmount: number; 
+    finalAmount: number; 
+    status: string;
+    event: {
+      name: string;
+    };
+  }
