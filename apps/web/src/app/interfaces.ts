@@ -3,13 +3,14 @@ export interface Event {
     id: number;
     title: string;
     description: string;
-    date: string; // Use string or Date based on your preference
+    datetime: string; // Use string or Date based on your preference
     locationId: number;
     picture?: string;
     thumbnail?: string;
-    userId: number;
+    organizerId: number;
     categoryId: number;
     availableSeats: number;
+    eventType: string;
     price: number;
     // Add other fields as per your API response
   }

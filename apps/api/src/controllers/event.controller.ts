@@ -89,7 +89,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
 
 
 export const getAllEvents = async (req: Request, res: Response) => {
-  const { page = 1, pageSize = 5, categoryId, query } = req.query;
+  const { page = 1, pageSize = 6, categoryId, query } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
@@ -231,7 +231,7 @@ export const getEventsByCategory = async (req: Request, res: Response) => {
 
     if (events.length === 0) {
       return res.status(404).send({
-        message: "No events found for the given categoryId",
+        message: "No events found for the given category",
       });
     }
 
@@ -292,7 +292,7 @@ export const getLocationById = async (req: Request, res: Response) => {
 };
 
 export const getEventsByLocation = async (req: Request, res: Response) => {
-  const { locationId, page = 1, pageSize = 5 } = req.query;
+  const { locationId, page = 1, pageSize = 6 } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
@@ -319,7 +319,7 @@ export const getEventsByLocation = async (req: Request, res: Response) => {
 
     if (events.length === 0) {
       return res.status(404).send({
-        message: "No events found for the given locationId",
+        message: "No events found for the given location",
       });
     }
 
@@ -371,7 +371,7 @@ export const getEventsByCategoryAndLocation = async (req: Request, res: Response
 
     if (events.length === 0) {
       return res.status(404).send({
-        message: "No events found for the given categoryId and locationId",
+        message: "No events found for the given category and location",
       });
     }
 
@@ -446,63 +446,7 @@ export const createEventDiscount = async (req: Request, res: Response): Promise<
   }
 };
 
-// export const applyEventDiscount = async (req: Request, res: Response): Promise<void> => {
-//   const { eventId } = req.params;
-//   const { code } = req.body;
 
-//   try {
-//     // Validate the input
-//     if (!eventId || isNaN(parseInt(eventId))) {
-//       res.status(400).json({ error: 'Invalid event ID' });
-//       return;
-//     }
-//     if (!code || typeof code !== 'string') {
-//       res.status(400).json({ error: 'Invalid discount code' });
-//       return;
-//     }
-
-//     // Check if the event exists
-//     const event = await prisma.event.findUnique({
-//       where: {
-//         id: parseInt(eventId),
-//       },
-//     });
-
-//     if (!event) {
-//       res.status(400).send({ message: "Event does not exist" });
-//       return;
-//     }
-
-//     // Check if the discount code is valid for the event
-//     const eventDiscount = await prisma.eventDiscount.findFirst({
-//       where: {
-//         eventId: parseInt(eventId),
-//         code: code,
-//         validFrom: { lte: new Date() },
-//         validTo: { gte: new Date() },
-//       },
-//     });
-
-//     if (!eventDiscount) {
-//       res.status(400).send({ message: "Invalid or expired discount code" });
-//       return;
-//     }
-
-//     // Calculate the discounted price
-//     const discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
-//     const discountedPrice = event.price.toNumber() - discountAmount;
-
-//     res.status(200).send({
-//       message: "Discount applied successfully",
-//       originalPrice: event.price,
-//       discountPercentage: eventDiscount.discountPercentage,
-//       discountedPrice: discountedPrice,
-//     });
-//   } catch (err) {
-//     console.error("Error applying discount:", err);
-//     res.status(500).send({ message: "Error applying discount", error: err });
-//   }
-// };
 
 export const applyEventDiscount = async (req: Request, res: Response): Promise<void> => {
   const { eventId } = req.params;
@@ -558,94 +502,6 @@ export const applyEventDiscount = async (req: Request, res: Response): Promise<v
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-// // Buy Ticket
-// export const buyTicket = async (req: Request, res: Response): Promise<void> => {
-//   const { eventId } = req.params;
-//   const { pointAmount, discountCode } = req.body;
-
-//   try {
-//     if (!eventId || isNaN(parseInt(eventId))) {
-//       res.status(400).json({ error: 'Invalid event ID' });
-//       return;
-//     }
-
-//     const userId = req.user?.id;
-//     if (!userId || isNaN(parseInt(userId))) {
-//       res.status(400).json({ error: 'Invalid user ID' });
-//       return;
-//     }
-
-//     const event = await prisma.event.findUnique({
-//       where: {
-//         id: parseInt(eventId),
-//       },
-//     });
-
-//     if (!event) {
-//       res.status(400).send({ message: "Event does not exist" });
-//       return;
-//     }
-
-//     let discountAmount = 0;
-
-//     if (discountCode) {
-//       const currentDate = new Date();
-
-//       const eventDiscount = await prisma.eventDiscount.findFirst({
-//         where: {
-//           eventId: parseInt(eventId),
-//           code: discountCode,
-//           validFrom: {
-//             lte: currentDate,
-//           },
-//           validTo: {
-//             gte: currentDate,
-//           },
-//         },
-//       });
-
-//       console.log("Event Discount:", eventDiscount);
-
-//       if (eventDiscount) {
-//         console.log(`Event Price: ${event.price.toNumber()}`);
-//         console.log(`Discount Percentage: ${eventDiscount.discountPercentage}`);
-//         discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
-//         console.log("Discount Amount:", discountAmount);
-//       } else {
-//         console.log("No valid discount found for the provided code.");
-        
-//       }
-//     }
-
-//     const totalAmount = event.price.toNumber();
-//     const pointAmountValue = pointAmount ? parseFloat(pointAmount) : 0;
-//     const finalAmount = totalAmount - discountAmount - pointAmountValue;
-
-//     console.log("Total Amount:", totalAmount);
-//     console.log("Point Amount Value:", pointAmountValue);
-//     console.log("Final Amount:", finalAmount);
-
-//     const transaction = await prisma.transaction.create({
-//       data: {
-//         userId: parseInt(userId), // Parse userId to integer
-//         eventId: parseInt(eventId),
-//         totalAmount: totalAmount,
-//         pointAmount: pointAmountValue,
-//         discountAmount: discountAmount,
-//         finalAmount: finalAmount,
-//         status: "Pending",
-//       },
-//     });
-
-//     res.status(200).send({ message: "Ticket purchased successfully", data: transaction });
-//   } catch (err) {
-//     console.error("Error purchasing ticket:", err);
-//     res.status(500).send({ message: "Error purchasing ticket", error: err });
-//   }
-// };
-
-
 
 // export const createComment = async (req: Request, res: Response): Promise<void> => {
 //   const { userId, eventId, text } = req.body;
@@ -747,6 +603,96 @@ export const applyEventDiscount = async (req: Request, res: Response): Promise<v
 //     res.status(500).send({ message: "Error retrieving comments", error: err });
 //   }
 // };
+
+// // Buy Ticket
+// export const buyTicket = async (req: Request, res: Response): Promise<void> => {
+//   const { eventId } = req.params;
+//   const { pointAmount, discountCode } = req.body;
+
+//   try {
+//     if (!eventId || isNaN(parseInt(eventId))) {
+//       res.status(400).json({ error: 'Invalid event ID' });
+//       return;
+//     }
+
+//     const userId = req.user?.id;
+//     if (!userId || isNaN(parseInt(userId))) {
+//       res.status(400).json({ error: 'Invalid user ID' });
+//       return;
+//     }
+
+//     const event = await prisma.event.findUnique({
+//       where: {
+//         id: parseInt(eventId),
+//       },
+//     });
+
+//     if (!event) {
+//       res.status(400).send({ message: "Event does not exist" });
+//       return;
+//     }
+
+//     let discountAmount = 0;
+
+//     if (discountCode) {
+//       const currentDate = new Date();
+
+//       const eventDiscount = await prisma.eventDiscount.findFirst({
+//         where: {
+//           eventId: parseInt(eventId),
+//           code: discountCode,
+//           validFrom: {
+//             lte: currentDate,
+//           },
+//           validTo: {
+//             gte: currentDate,
+//           },
+//         },
+//       });
+
+//       console.log("Event Discount:", eventDiscount);
+
+//       if (eventDiscount) {
+//         console.log(`Event Price: ${event.price.toNumber()}`);
+//         console.log(`Discount Percentage: ${eventDiscount.discountPercentage}`);
+//         discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
+//         console.log("Discount Amount:", discountAmount);
+//       } else {
+//         console.log("No valid discount found for the provided code.");
+        
+//       }
+//     }
+
+//     const totalAmount = event.price.toNumber();
+//     const pointAmountValue = pointAmount ? parseFloat(pointAmount) : 0;
+//     const finalAmount = totalAmount - discountAmount - pointAmountValue;
+
+//     console.log("Total Amount:", totalAmount);
+//     console.log("Point Amount Value:", pointAmountValue);
+//     console.log("Final Amount:", finalAmount);
+
+//     const transaction = await prisma.transaction.create({
+//       data: {
+//         userId: parseInt(userId), // Parse userId to integer
+//         eventId: parseInt(eventId),
+//         totalAmount: totalAmount,
+//         pointAmount: pointAmountValue,
+//         discountAmount: discountAmount,
+//         finalAmount: finalAmount,
+//         status: "Pending",
+//       },
+//     });
+
+//     res.status(200).send({ message: "Ticket purchased successfully", data: transaction });
+//   } catch (err) {
+//     console.error("Error purchasing ticket:", err);
+//     res.status(500).send({ message: "Error purchasing ticket", error: err });
+//   }
+// };
+
+
+
+
 
 // export const buyTicket = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
 //   const { eventId } = req.params; // Extract eventId from request parameters
