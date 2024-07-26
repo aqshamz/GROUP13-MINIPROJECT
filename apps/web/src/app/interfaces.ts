@@ -61,3 +61,16 @@ export interface Event {
       name: string;
     };
   }
+
+  export interface Ticket {
+    id: number;
+    attendeeId: number;
+    credentials: string;
+    event: {
+      name: string;
+      datetime: string;
+      location: {
+        name: string;
+      }
+    };
+  }

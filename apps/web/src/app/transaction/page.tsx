@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Text, UnorderedList, ListItem, Button, Box, Collapse, useToast } from "@chakra-ui/react";
+import { Text, UnorderedList, ListItem, Button, Box, Collapse, Tag, useToast } from "@chakra-ui/react";
 import { getAllTransactions, finishTransaction } from "@/api/payment";
 import { Transaction } from "../interfaces";
 
@@ -53,6 +53,19 @@ export default function Transactions() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return <Tag colorScheme='yellow' >Pending</Tag>;
+      case "Cancelled":
+        return <Tag colorScheme='red' >Cancelled</Tag>;
+      case "Completed":
+        return <Tag colorScheme='green' >Completed</Tag>;
+      default:
+        return <Tag colorScheme='black' >{status}</Tag>;
+    }
+  };
+
   return (
     <Box>
       {loading ? (
@@ -69,7 +82,9 @@ export default function Transactions() {
               </Text>
               <Text>Ticket Amount Ordered: {transaction.ticketAmount}</Text>
               <Text>Total Paid: {transaction.finalAmount}</Text>
-              <Text mt={4}>Status: {transaction.status}</Text>
+              <Text mt={4}>
+                Status: {getStatusLabel(transaction.status)}
+              </Text>              
               <Button onClick={() => handleToggleDetails(transaction.id)} mt={4}>
                 {expandedTransactionId === transaction.id ? "Hide Details" : "Show Details"}
               </Button>
