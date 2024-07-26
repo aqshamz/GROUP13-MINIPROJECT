@@ -111,4 +111,46 @@ export class UserController {
       res.status(500).json({ message: (error as Error).message });
     }
   }
+
+  async getTicketData(req: Request, res: Response) {
+    // const today = new Date();
+      try {
+        const user = req.user;
+  
+        if (!user) {
+          return res.status(401).send("Unauthorized");
+        }
+  
+          const ticketData = await prisma.ticket.findMany({
+            include: {
+              event: {
+                select: {
+                  name: true,
+                  datetime: true,
+                  location: { // Include location data
+                    select: { // Specify location data to fetch (optional)
+                      name: true, // Example: Include location name
+                    },
+                  },
+                },
+              },
+            },
+            where: {
+              attendeeId: parseInt(user.id),
+            },
+            orderBy: 
+            {
+              createdAt: 'desc',
+            },
+          });
+  
+        return res.status(200).send({
+          message: "Success",
+          data: ticketData,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: (error as Error).message });
+      }
+    }
 }

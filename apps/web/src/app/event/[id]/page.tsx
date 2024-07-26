@@ -238,6 +238,7 @@ const EventPage = () => {
             
             <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4 text-center">
             <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
+              {userRole === 'Customer' && (
               <Button
                 onClick={handleBuyTicket}
                 isLoading={ticketLoading}
@@ -246,6 +247,7 @@ const EventPage = () => {
               >
                 Book Ticket
               </Button>
+               )}
 
               <Input
                 placeholder="Enter Discount Code"
