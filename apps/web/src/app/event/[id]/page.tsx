@@ -31,7 +31,7 @@ const EventPage = () => {
   const [rating, setRating] = useState<number>(0);
   const [hasCommented, setHasCommented] = useState<boolean>(false);
 
-  const formattedThumbnail = event?.picture.replace(/\\/g, '/');
+  const formattedThumbnail = event?.picture?.replace(/\\/g, '/') || '';
 
   useEffect(() => {
     const fetchEventDetails = async (eventId: number) => {
@@ -93,7 +93,7 @@ const EventPage = () => {
     e.preventDefault();
     setCommentLoading(true);
 
-    if (!userId || !commentText || rating === 0) {
+    if (!userId || !commentText || !rating ) {
       console.error('User ID, comment text, and rating are required');
       setCommentLoading(false);
       return;
@@ -122,6 +122,10 @@ const EventPage = () => {
     } finally {
       setCommentLoading(false);
     }
+  };
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
   };
 
   const handleApplyDiscount = async () => {
@@ -227,7 +231,7 @@ const EventPage = () => {
                   <ReactStars
                     count={5}
                     value={rating}
-                    onChange={(newRating) => setRating(newRating)}
+                    onChange={handleRatingChange}
                     size={24}
                     color2={'#ffd700'}
                     half={false}
@@ -266,7 +270,7 @@ const EventPage = () => {
             <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
               {userRole === 'Customer' && (
               <Button
-                onClick={handleBuyTicket}
+                // onClick={handleBuyTicket}
                 isLoading={ticketLoading}
                 disabled={ticketLoading}
                 className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
