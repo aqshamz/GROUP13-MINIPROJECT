@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import prisma from '../prisma'
 import multer, { diskStorage } from 'multer';
 
@@ -89,17 +90,17 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
 
 
 export const getAllEvents = async (req: Request, res: Response) => {
-  const { page = 1, pageSize = 6, categoryId, query } = req.query;
+  const { page = 1, pageSize = 6, categoryId, locationId, query } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
   console.log(`Fetching events with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}`);
 
   try {
-    const where: any = {
+    const where: Prisma.EventWhereInput = {
       OR: query ? [
-        { name: { contains: query } },
-        { description: { contains: query } }
+        { name: { contains: query as string } },
+        { description: { contains: query as string } }
       ] : undefined,
     };
 
@@ -107,7 +108,10 @@ export const getAllEvents = async (req: Request, res: Response) => {
       where.categoryId = Number(categoryId);
     }
 
-    // Correctly using count method without nested select
+    if (locationId) {
+      where.locationId = Number(locationId);
+    }
+
     const total = await prisma.event.count({ where });
     const events = await prisma.event.findMany({ skip, take, where });
 
@@ -204,36 +208,26 @@ export const getCategoryById = async (req: Request, res: Response) => {
 };
 
 export const getEventsByCategory = async (req: Request, res: Response) => {
-  const { categoryId, page = 1, pageSize = 5 } = req.query;
+  const { categoryId, page = 1, pageSize = 6, query } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
-  console.log(`Fetching events for category ${categoryId} with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}`);
+  console.log(`Fetching events by category with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}, query: ${query}`);
 
   try {
-    if (!categoryId) {
-      return res.status(400).send({
-        message: "categoryId query parameter is required",
-      });
-    }
+    const where: Prisma.EventWhereInput = {
+      categoryId: Number(categoryId),
+      OR: query ? [
+        { name: { contains: query as string } },
+        { description: { contains: query as string } }
+      ] : undefined,
+    };
 
-    const total = await prisma.event.count({
-      where: { categoryId: Number(categoryId) },
-    });
-    const events = await prisma.event.findMany({
-      where: { categoryId: Number(categoryId) },
-      skip,
-      take,
-    });
+    const total = await prisma.event.count({ where });
+    const events = await prisma.event.findMany({ skip, take, where });
 
-    console.log(`Total events for category ${categoryId}: ${total}`);
+    console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
-
-    if (events.length === 0) {
-      return res.status(404).send({
-        message: "No events found for the given category",
-      });
-    }
 
     return res.status(200).send({
       message: "success",
@@ -241,7 +235,7 @@ export const getEventsByCategory = async (req: Request, res: Response) => {
       total,
     });
   } catch (err) {
-    console.error(`Error fetching events for category ${categoryId}:`, err);
+    console.error("Error fetching events by category:", err);
     return res.status(500).send({
       message: "error",
       data: JSON.stringify(err),
@@ -292,36 +286,26 @@ export const getLocationById = async (req: Request, res: Response) => {
 };
 
 export const getEventsByLocation = async (req: Request, res: Response) => {
-  const { locationId, page = 1, pageSize = 6 } = req.query;
+  const { locationId, page = 1, pageSize = 6, query } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
-  console.log(`Fetching events for location ${locationId} with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}`);
+  console.log(`Fetching events by location with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}, query: ${query}`);
 
   try {
-    if (!locationId) {
-      return res.status(400).send({
-        message: "locationId query parameter is required",
-      });
-    }
+    const where: Prisma.EventWhereInput = {
+      locationId: Number(locationId),
+      OR: query ? [
+        { name: { contains: query as string } },
+        { description: { contains: query as string } }
+      ] : undefined,
+    };
 
-    const total = await prisma.event.count({
-      where: { locationId: Number(locationId) },
-    });
-    const events = await prisma.event.findMany({
-      where: { locationId: Number(locationId) },
-      skip,
-      take,
-    });
+    const total = await prisma.event.count({ where });
+    const events = await prisma.event.findMany({ skip, take, where });
 
-    console.log(`Total events for location ${locationId}: ${total}`);
+    console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
-
-    if (events.length === 0) {
-      return res.status(404).send({
-        message: "No events found for the given location",
-      });
-    }
 
     return res.status(200).send({
       message: "success",
@@ -329,7 +313,7 @@ export const getEventsByLocation = async (req: Request, res: Response) => {
       total,
     });
   } catch (err) {
-    console.error(`Error fetching events for location ${locationId}:`, err);
+    console.error("Error fetching events by location:", err);
     return res.status(500).send({
       message: "error",
       data: JSON.stringify(err),
@@ -338,42 +322,27 @@ export const getEventsByLocation = async (req: Request, res: Response) => {
 };
 
 export const getEventsByCategoryAndLocation = async (req: Request, res: Response) => {
-  const { categoryId, locationId, page = 1, pageSize = 5 } = req.query;
+  const { categoryId, locationId, page = 1, pageSize = 6, query } = req.query;
   const skip = (Number(page) - 1) * Number(pageSize);
   const take = Number(pageSize);
 
-  console.log(`Fetching events for category ${categoryId} and location ${locationId} with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}`);
+  console.log(`Fetching events by category and location with page: ${page}, pageSize: ${pageSize}, skip: ${skip}, take: ${take}, query: ${query}`);
 
   try {
-    if (!categoryId || !locationId) {
-      return res.status(400).send({
-        message: "categoryId and locationId query parameters are required",
-      });
-    }
+    const where: Prisma.EventWhereInput = {
+      categoryId: Number(categoryId),
+      locationId: Number(locationId),
+      OR: query ? [
+        { name: { contains: query as string } },
+        { description: { contains: query as string } }
+      ] : undefined,
+    };
 
-    const total = await prisma.event.count({
-      where: { 
-        categoryId: Number(categoryId),
-        locationId: Number(locationId)
-      },
-    });
-    const events = await prisma.event.findMany({
-      where: { 
-        categoryId: Number(categoryId),
-        locationId: Number(locationId)
-      },
-      skip,
-      take,
-    });
+    const total = await prisma.event.count({ where });
+    const events = await prisma.event.findMany({ skip, take, where });
 
-    console.log(`Total events for category ${categoryId} and location ${locationId}: ${total}`);
+    console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
-
-    if (events.length === 0) {
-      return res.status(404).send({
-        message: "No events found for the given category and location",
-      });
-    }
 
     return res.status(200).send({
       message: "success",
@@ -381,7 +350,7 @@ export const getEventsByCategoryAndLocation = async (req: Request, res: Response
       total,
     });
   } catch (err) {
-    console.error(`Error fetching events for category ${categoryId} and location ${locationId}:`, err);
+    console.error("Error fetching events by category and location:", err);
     return res.status(500).send({
       message: "error",
       data: JSON.stringify(err),
@@ -503,61 +472,77 @@ export const applyEventDiscount = async (req: Request, res: Response): Promise<v
   }
 };
 
-// export const createComment = async (req: Request, res: Response): Promise<void> => {
-//   const { userId, eventId, text } = req.body;
+export const createComment = async (req: Request, res: Response) => {
+  const userId = req.user?.id as number | undefined;
 
-//   try {
-//     // Check if userId is valid
-//     if (!userId || isNaN(parseInt(userId))) {
-//       res.status(400).json({ error: "Invalid user ID" });
-//       return;
-//     }
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
 
-//     // Check if eventId is valid
-//     if (!eventId || isNaN(parseInt(eventId))) {
-//       res.status(400).json({ error: "Invalid event ID" });
-//       return;
-//     }
+  const { eventId, rating, text } = req.body;
 
-//     // Check if the user exists
-//     const userExists = await prisma.user.findUnique({
-//       where: {
-//         id: parseInt(userId),
-//       },
-//     });
+  try {
+    // Ensure eventId and rating are numbers
+    const eventIdNum = parseInt(eventId, 10);
+    const ratingNum = parseFloat(rating);
 
-//     if (!userExists) {
-//       res.status(400).send({ message: "User does not exist" });
-//       return;
-//     }
+    // Check if the user has completed a transaction for the event
+    const transaction = await prisma.transaction.findFirst({
+      where: {
+        userId: userId,
+        eventId: eventIdNum,
+        status: 'Completed'
+      },
+      
+    });
 
-//     // Check if the event exists
-//     const eventExists = await prisma.event.findUnique({
-//       where: {
-//         id: parseInt(eventId),
-//       },
-//     });
+    if (!transaction) {
+      return res.status(403).json({ message: 'You need to purchase a ticket for this event before commenting.' });
+    }
 
-//     if (!eventExists) {
-//       res.status(400).send({ message: "Event does not exist" });
-//       return;
-//     }
+    // Create the comment
+    const comment = await prisma.comment.create({
+      data: {
+        transactionId: transaction.id,
+        attendeeId: userId,
+        rating: ratingNum,
+        text
+      }
+    });
 
-//     // Create the comment
-//     const comment = await prisma.comment.create({
-//       data: {
-//         text: String(text),
-//         userId: parseInt(userId),
-//         eventId: parseInt(eventId),
-//       },
-//     });
+    res.status(201).json(comment);
+  } catch (error: unknown) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
 
-//     res.status(200).send({ message: "Comment created successfully", data: comment });
-//   } catch (err) {
-//     console.error("Error creating comment:", err);
-//     res.status(500).send({ message: "Error creating comment", error: err });
-//   }
-// };
+export const getCommentsByEvent = async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+
+  try {
+    const eventIdNum = parseInt(eventId, 10);
+
+    const comments = await prisma.comment.findMany({
+      where: {
+        transaction: {
+          eventId: eventIdNum,
+        },
+      },
+      include: {
+        transaction: {
+          include: {
+            user: true, // Include the user relation within the transaction
+          },
+        },
+      },
+      
+    });
+
+    res.status(200).json({ data: comments });
+  } catch (error: unknown) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
 
 // export const getCommentByEventId = async (req: Request, res: Response): Promise<void> => {
 //   const { eventId } = req.params;

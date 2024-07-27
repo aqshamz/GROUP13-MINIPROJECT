@@ -2,12 +2,13 @@
 
 
 import { useEffect, useState, FormEvent } from 'react';
-import { Text, Input, Button, Box, Textarea, Stack, Image } from '@chakra-ui/react';
+import { Text, Input, Button, Box, Textarea, Stack, Image, CheckboxGroup, Checkbox } from '@chakra-ui/react';
 import { useParams, usePathname } from 'next/navigation';
-import { getEventById, getCommentsByEventId, createComment, buyTicket, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
+import { getEventById, getCommentsByEventId, createComment, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
 import { Event, Comment, Location, Category } from '../../interfaces';
-import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie'; 
+import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie';
 
+import ReactStars from 'react-stars';
 
 const EventPage = () => {
   const { id } = useParams();
@@ -25,9 +26,12 @@ const EventPage = () => {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [location, setLocation] = useState<Location | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
-  const formattedThumbnail = event?.picture.replace(/\\/g, '/');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [rating, setRating] = useState<number>(0);
+  const [hasCommented, setHasCommented] = useState<boolean>(false);
+
+  const formattedThumbnail = event?.picture.replace(/\\/g, '/');
 
   useEffect(() => {
     const fetchEventDetails = async (eventId: number) => {
@@ -39,6 +43,16 @@ const EventPage = () => {
 
         const categoryResponse = await getCategoryById(response.data.categoryId);
         setCategory(categoryResponse);
+
+        const commentsResponse = await getCommentsByEventId(eventId);
+        console.log('Fetched comments:', commentsResponse); // Log the full response
+        setComments(commentsResponse.data || []);
+
+        // Check if the user has already commented
+        if (userId) {
+          const userComments = commentsResponse.data.filter(comment => comment.attendeeId === userId);
+          setHasCommented(userComments.length > 0);
+        }
 
         setLoading(false);
       } catch (error) {
@@ -59,7 +73,7 @@ const EventPage = () => {
       console.error('Event ID is undefined');
       setLoading(false);
     }
-  }, [id]);
+  }, [id, userId]);
 
   useEffect(() => {
     fetchUserRoleAndId();
@@ -70,8 +84,8 @@ const EventPage = () => {
     if (data) {
       setUserRole(data.role);
       setUserId(data.userId);
-      console.log("role: >>",data.role)
-      console.log("id: >>",data.userId)
+      console.log("role: >>", data.role);
+      console.log("id: >>", data.userId);
     }
   };
 
@@ -79,34 +93,34 @@ const EventPage = () => {
     e.preventDefault();
     setCommentLoading(true);
 
-    if (!userId || !commentText) {
-      console.error('User ID and comment text are required');
+    if (!userId || !commentText || rating === 0) {
+      console.error('User ID, comment text, and rating are required');
+      setCommentLoading(false);
+      return;
+    }
+
+    if (hasCommented) {
+      console.error('You have already submitted a comment for this event.');
       setCommentLoading(false);
       return;
     }
 
     try {
-      const newComment = await createComment({ userId: parseInt(userId), eventId: parseInt(id as string), text: commentText });
-      setComments([...comments, newComment.data]);
+      await createComment({ userId: parseInt(userId), eventId: parseInt(id as string), text: commentText, rating });
+
+      // Fetch updated comments
+      const refreshedComments = await getCommentsByEventId(parseInt(id as string));
+      setComments(refreshedComments.data);
+      
+      // Set the state to indicate the user has commented
+      setHasCommented(true);
+
       setCommentText('');
+      setRating(0);
     } catch (error) {
       console.error('Error creating comment:', error);
     } finally {
       setCommentLoading(false);
-    }
-  };
-
-  const handleBuyTicket = async () => {
-    setTicketLoading(true);
-
-    try {
-      await buyTicket({ userId: parseInt(userId), eventId: parseInt(id as string) });
-      console.log('Ticket purchased successfully');
-      fetchEventDetails(parseInt(id as string));
-    } catch (error) {
-      console.error('Error purchasing ticket:', error);
-    } finally {
-      setTicketLoading(false);
     }
   };
 
@@ -175,7 +189,7 @@ const EventPage = () => {
         <div className="lg:w-2/3 space-y-6">
           <Text as="h1" className="text-4xl font-bold mb-4">{event.name}</Text>
           <Text className="text-2xl font-semibold mb-2">About this event</Text>
-          <Text className="text-lg mb-2">{event.description}</Text>
+          <p className="text-lg mb-2">{event.description}</p>
           <div className="mb-6">
             <Text className="text-2xl font-semibold">Date</Text>
             <Text className="text-lg">{formatDate(event.datetime)}</Text>
@@ -190,12 +204,12 @@ const EventPage = () => {
           </div>
           
           <div className="mb-6">
-          <Text className="text-2xl font-semibold">Price:</Text>
-          {event.eventType === 'Free' ? (
-          <Text className="text-lg">Free</Text>
-          ) : (
-          <Text className="text-lg">Rp{formatPrice(event.price)}</Text>
-          )}
+            <Text className="text-2xl font-semibold">Price:</Text>
+            {event.eventType === 'Free' ? (
+              <Text className="text-lg">Free</Text>
+            ) : (
+              <Text className="text-lg">Rp{formatPrice(event.price)}</Text>
+            )}
           </div>
 
           {userRole === 'Customer' && !isEventInFuture() && (
@@ -208,8 +222,19 @@ const EventPage = () => {
                   required
                   className="p-2 border rounded"
                 />
-                <Button type="submit" isLoading={commentLoading} className="bg-blue-500 text-white px-4 py-2 rounded">
-                  Submit Comment
+                <div className="flex items-center space-x-2">
+                  <Text className="text-lg font-semibold">Rating:</Text>
+                  <ReactStars
+                    count={5}
+                    value={rating}
+                    onChange={(newRating) => setRating(newRating)}
+                    size={24}
+                    color2={'#ffd700'}
+                    half={false}
+                  />
+                </div>
+                <Button type="submit" isLoading={commentLoading} disabled={hasCommented} className="bg-blue-500 text-white px-4 py-2 rounded">
+                  {hasCommented ? 'You have already commented' : 'Submit Comment'}
                 </Button>
               </Stack>
             </form>
@@ -217,18 +242,19 @@ const EventPage = () => {
 
           {!isEventInFuture() && (
             <div className="mt-8">
-            <Text as="h2" className="text-2xl font-bold mb-4">Comments</Text>
-            {comments.length === 0 ? (
-              <Text>No comments yet.</Text>
-            ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="mb-4 p-4 border rounded-md shadow-md">
-                  <Text as="strong" className="block">{comment.user?.name || 'Unknown User'}:</Text>
-                  <Text>{comment.text}</Text>
-                </div>
-              ))
-            )}
-          </div>
+              <Text as="h2" className="text-2xl font-bold mb-4">Comments</Text>
+              {comments?.length === 0 ? (
+                <Text>No comments yet.</Text>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="mb-4 p-4 border rounded-md shadow-md">
+                    <Text as="strong" className="block">{comment.transaction.user?.username || 'Unknown User'}:</Text>
+                    <Text>{comment.rating}</Text>
+                    <Text>{comment.text}</Text>
+                  </div>
+                ))
+              )}
+            </div>
           )}
           
         </div>

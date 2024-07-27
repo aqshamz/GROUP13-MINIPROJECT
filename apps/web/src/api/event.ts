@@ -6,12 +6,17 @@ import { getCookie } from "@/actions/cookies";
 const base_api = "http://localhost:8000/api"
 
 
-export async function getAllEvents(page: number, pageSize: number, query?: string, categoryId?: number): Promise<{ data: Event[], total: number }> {
+
+export async function getAllEvents(page: number, pageSize: number, query?: string, categoryId?: number, locationId?: number): Promise<{ data: Event[], total: number }> {
   try {
     let url = `${base_api}/event/events?page=${page}&pageSize=${pageSize}`;
 
     if (categoryId !== undefined && categoryId !== null) {
       url += `&categoryId=${categoryId}`;
+    }
+
+    if (locationId !== undefined && locationId !== null) {
+      url += `&locationId=${locationId}`;
     }
 
     if (query) {
@@ -63,10 +68,13 @@ export async function getCategoryById(categoryId: number): Promise<Category> {
   }
 }
 
-export async function getEventsByCategory(categoryId: number, page: number, pageSize: number): Promise<{ data: Event[], total: number }> {
+export async function getEventsByCategory(categoryId: number, page: number, pageSize: number, query?: string): Promise<{ data: Event[], total: number }> {
   try {
-    const url = `${base_api}/event/eventsByCategory?categoryId=${categoryId}&page=${page}&pageSize=${pageSize}`;
-    console.log(`Requesting URL: ${url}`); // Log the URL being requested
+    let url = `${base_api}/event/eventsByCategory?categoryId=${categoryId}&page=${page}&pageSize=${pageSize}`;
+
+    if (query) {
+      url += `&query=${query}`;
+    }
 
     const res = await axios.get<{ data: Event[], total: number }>(url);
     console.log(`Response data:`, res.data); // Log the response data
@@ -75,7 +83,6 @@ export async function getEventsByCategory(categoryId: number, page: number, page
   } catch (error) {
     console.error("Error fetching events by category:", error);
     if (axios.isAxiosError(error) && error.response) {
-      // Provide detailed error information
       throw new Error(`${error.response.data.message || error.message}`);
     }
     throw new Error("An unexpected error occurred.");
@@ -102,10 +109,13 @@ export async function getLocationById(locationId: number): Promise<Location> {
   }
 }
 
-export async function getEventsByLocation(locationId: number, page: number, pageSize: number): Promise<{ data: Event[], total: number }> {
+export async function getEventsByLocation(locationId: number, page: number, pageSize: number, query?: string): Promise<{ data: Event[], total: number }> {
   try {
-    const url = `${base_api}/event/eventsByLocation?locationId=${locationId}&page=${page}&pageSize=${pageSize}`;
-    console.log(`Requesting URL: ${url}`); // Log the URL being requested
+    let url = `${base_api}/event/eventsByLocation?locationId=${locationId}&page=${page}&pageSize=${pageSize}`;
+
+    if (query) {
+      url += `&query=${query}`;
+    }
 
     const res = await axios.get<{ data: Event[], total: number }>(url);
     console.log(`Response data:`, res.data); // Log the response data
@@ -114,22 +124,19 @@ export async function getEventsByLocation(locationId: number, page: number, page
   } catch (error) {
     console.error("Error fetching events by location:", error);
     if (axios.isAxiosError(error) && error.response) {
-      // Provide detailed error information
       throw new Error(`${error.response.data.message || error.message}`);
     }
     throw new Error("An unexpected error occurred.");
   }
 }
 
-export async function getEventsByCategoryAndLocation(
-  categoryId: number | null,
-  locationId: number | null,
-  page: number,
-  pageSize: number
-): Promise<{ data: Event[], total: number }> {
+export async function getEventsByCategoryAndLocation(categoryId: number, locationId: number, page: number, pageSize: number, query?: string): Promise<{ data: Event[], total: number }> {
   try {
-    const url = `${base_api}/event/eventsByCategoryAndLocation?categoryId=${categoryId}&locationId=${locationId}&page=${page}&pageSize=${pageSize}`;
-    console.log(`Requesting URL: ${url}`); // Log the URL being requested
+    let url = `${base_api}/event/eventsByCategoryAndLocation?categoryId=${categoryId}&locationId=${locationId}&page=${page}&pageSize=${pageSize}`;
+
+    if (query) {
+      url += `&query=${query}`;
+    }
 
     const res = await axios.get<{ data: Event[], total: number }>(url);
     console.log(`Response data:`, res.data); // Log the response data
@@ -138,12 +145,11 @@ export async function getEventsByCategoryAndLocation(
   } catch (error) {
     console.error("Error fetching events by category and location:", error);
     if (axios.isAxiosError(error) && error.response) {
-      // Provide detailed error information
       throw new Error(`${error.response.data.message || error.message}`);
     }
     throw new Error("An unexpected error occurred.");
   }
-  }
+}
 
 
 export async function createEvent(formData: FormData) {
@@ -195,25 +201,42 @@ export const applyEventDiscount = async (eventId: number, code: string) => {
   return response.data;
 };
 
-// export async function getCommentsByEventId(eventId: number): Promise<{ data: Comment[] }> {
-//   try {
-//     const res = await axios.get<{ data: Comment[] }>(`${base_api}/event/comments/${eventId}`);
-//     return res.data;
-//   } catch (error) {
-//     console.error("Error fetching comments by event ID:", error);
-//     throw error;
-//   }
-// }
+export async function getCommentsByEventId(eventId: number): Promise<{ data: Comment[] }> {
+  try {
+    const res = await axios.get<{ data: Comment[] }>(`${base_api}/event/events/${eventId}/comments`);
+    return res.data; // `res.data` already contains the `{ data: Comment[] }` structure
+  } catch (error) {
+    console.error("Error fetching comments by event ID:", error);
+    throw error;
+  }
+}
 
-// export async function createComment(commentData: { userId: number; eventId: number; text: string }): Promise<{ data: Comment }> {
-//   try {
-//     const res = await axios.post<{ data: Comment }>(`${base_api}/event/comments`, commentData);
-//     return res.data;
-//   } catch (error) {
-//     console.error("Error creating comment:", error);
-//     throw error;
-//   }
-// }
+export async function createComment(commentData: { userId: number; eventId: number; text: string; rating: number }): Promise<{ data: Comment }> {
+  try {
+    // Get the authorization token from cookies
+    const authToken = await getCookie("authToken"); // Await the promise to get the token
+
+    if (!authToken) {
+      throw new Error('No authorization token found');
+    }
+
+    const res = await axios.post<{ data: Comment }>(
+      `${base_api}/event/comments`, 
+      commentData,
+      {
+        headers: {
+          'Authorization': `Bearer ${authToken}`, // Include the token in the headers
+          'Content-Type': 'application/json' // Ensure the content type is set to JSON
+        }
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    throw error;
+  }
+}
 
 // export async function buyTicket(ticketData: { userId: number; eventId: number }): Promise<void> {
 //   try {
