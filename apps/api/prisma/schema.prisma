@@ -110,7 +110,7 @@ model Event {
   datetime       DateTime
   locationId     Int
   location       Location   @relation(fields: [locationId], references: [id])
-  description    String
+  description    String     @db.LongText
   availableSeats Int
   thumbnail      String
   picture        String

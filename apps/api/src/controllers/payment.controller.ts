@@ -3,7 +3,7 @@ import prisma from '@/prisma';
 import { validationResult } from 'express-validator';
 import { sign } from "jsonwebtoken"
 
-import { Decimal } from 'decimal.js';
+
 import { TransactionStatus } from '@prisma/client';
 import crypto from 'crypto';
 
