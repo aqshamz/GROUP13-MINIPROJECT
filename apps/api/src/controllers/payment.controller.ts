@@ -296,4 +296,44 @@ export class PaymentController {
         res.status(500).json({ message: (error as Error).message }); 
       }
     }
+
+    async createFreeTicket(req: Request, res: Response) {
+
+      const user = req.user;
+      if (!user) {
+        throw new Error('Unauthorized');
+      }
+      
+      const { eventId, seat, amount } = req.body;
+  
+      try {
+          const cutSeat = await prisma.event.update({
+            where: { id: parseInt(eventId) },
+            data: {
+              availableSeats: seat - amount,
+            },
+          });
+          if(!cutSeat){
+            throw new Error('Error Making Ticket');
+          }
+
+          for(let i = 0; i < amount; i++){
+            const timestamp = Date.now().toString(36);
+            const randomString = crypto.randomBytes(4).toString('hex');
+            let credentials = `${timestamp}-${randomString}`;
+            await prisma.ticket.create({
+              data: { 
+                eventId: Number(eventId), 
+                attendeeId: Number(user.id),
+                credentials
+              },
+            });
+          }
+
+        res.status(201).json({ message: "Success Make Ticket Tickets" }); 
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: (error as Error).message }); 
+      }
+    }
   }
