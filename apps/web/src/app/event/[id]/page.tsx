@@ -260,19 +260,21 @@ const EventPage = () => {
         </div>
 
         {isEventInFuture() && (
-          <div className="mt-8 lg:w-1/3 lg:sticky lg:top-4 lg:ml-4 lg:mb-4 md:w-full  md:mb-6 sm:w-full  sm:mb-8">
-            <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4 text-center md:py-6 md:px-6 sm:py-4 sm:px-4">
-              <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
+          <div className="lg:w-1/3 lg:sticky lg:top-4 lg:ml-4">
+            
+            <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4 text-center">
+            <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
               {userRole === 'Customer' && (
-                <Button
-                  // onClick={handleBuyTicket}
-                  isLoading={ticketLoading}
-                  disabled={ticketLoading}
-                  className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
-                >
-                  Book Ticket
-                </Button>
-              )}
+              <Button
+                onClick={handleBuyTicket}
+                isLoading={ticketLoading}
+                disabled={ticketLoading}
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
+              >
+                Book Ticket
+              </Button>
+               )}
+
               <Input
                 placeholder="Enter Discount Code"
                 value={discountCode}

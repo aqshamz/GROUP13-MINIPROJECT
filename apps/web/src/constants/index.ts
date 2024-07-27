@@ -4,6 +4,7 @@ export const NAV_LINKS = [
     { href: '/', key: 'login', label: 'Login' },
     { href: '/event', key: 'event', label: 'Events' },
     { href: '/transaction', key: 'transaction', label: 'Transactions' },
+    { href: '/ticket', key: 'ticket', label: 'Tickets' },
   ];
 
 // FEATURES SECTION
