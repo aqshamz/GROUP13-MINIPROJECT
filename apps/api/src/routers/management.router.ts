@@ -15,6 +15,7 @@ export class ManagementRouter {
   private initializeRoutes(): void {
     this.router.get('/eventbyid', verifyToken, organizerGuard, this.managementController.getEventById);
     this.router.get('/transactionbyid', verifyToken, organizerGuard, this.managementController.getTransactionById);
+    this.router.get('/ticketbyid', verifyToken, organizerGuard, this.managementController.getTicketById);
   }
 
   getRouter(): Router {

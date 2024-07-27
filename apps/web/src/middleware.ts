@@ -8,6 +8,9 @@ const routes = {
     transaction: ['/transaction'],
     ticket: ['/ticket'],
     management: ['/management'],
+    managementEvent: ['/management/event'],
+    managementTransaction: ['/management/transaction'],
+    managementTicket: ['/management/ticket'],
     public: ['/login', '/register']
 };
 
@@ -29,7 +32,10 @@ export default async function middleware(req: NextRequest) {
             { routes: routes.event, requiredRole: null },
             { routes: routes.transaction, requiredRole: "Customer" },
             { routes: routes.ticket, requiredRole: "Customer" },
-            { routes: routes.management, requiredRole: "Organizer" }
+            { routes: routes.management, requiredRole: "Organizer" },
+            { routes: routes.managementEvent, requiredRole: "Organizer" },
+            { routes: routes.managementTransaction, requiredRole: "Organizer" },
+            { routes: routes.managementTicket, requiredRole: "Organizer" }
         ];
 
         // Check route requirements
