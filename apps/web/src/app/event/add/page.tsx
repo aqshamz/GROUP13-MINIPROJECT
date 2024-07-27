@@ -140,11 +140,12 @@ export default function EventAdd() {
             </FormControl>
             <FormControl>
               <FormLabel>Description</FormLabel>
-              <Input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter event description here"
+              size="md"
+            />
             </FormControl>
             <FormControl>
               <FormLabel>Date</FormLabel>
