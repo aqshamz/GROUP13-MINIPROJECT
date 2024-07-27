@@ -87,4 +87,52 @@ export class ManagementController {
             res.status(500).json({ message: (error as Error).message });
         }
     }
+
+    async getTicketById(req: Request, res: Response) {
+        try {
+            const user = req.user;
+            if (!user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            const [ticketData, ticketCount] = await Promise.all([
+                prisma.ticket.findMany({
+                    include: {
+                        attendee: {
+                            select: {
+                                username: true,
+                            },
+                        },
+                        event: {
+                            select: {
+                                name: true,
+                                datetime: true,
+                            },
+                        }
+                    },
+                    where: {
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                }),
+                prisma.ticket.count({
+                    where: {
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                })
+            ]);
+
+            return res.status(200).send({
+                message: "Success",
+                data: ticketData,
+                count: ticketCount
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 }

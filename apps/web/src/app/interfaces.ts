@@ -74,3 +74,43 @@ export interface Event {
       }
     };
   }
+
+  export interface TicketDashboard {
+    id: number;
+    credentials: string;
+    event: {
+      name: string;
+      datetime: string;
+    };
+    attendee: {
+      username: string;
+    };
+  }
+
+  export interface TransactionDashboard {
+    id: number;
+    userId: number;
+    eventId: number;
+    ticketAmount: number;
+    totalAmount: number; 
+    pointAmount: number;
+    discountAmount: number; 
+    finalAmount: number; 
+    status: string;
+    user: {
+      username: string;
+    };
+    event: {
+      name: string;
+    };
+  }
+
+  export interface EventDashboard {
+    id: number;
+    name: string;
+    datetime: string;
+    eventType: string;
+    location: {
+      name: string;
+    };
+  }
