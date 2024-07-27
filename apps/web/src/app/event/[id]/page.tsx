@@ -1,10 +1,22 @@
 "use client"
 
 
-import { useEffect, useState, FormEvent } from 'react';
-import { Text, Input, Button, Box, Textarea, Stack, Image, CheckboxGroup, Checkbox } from '@chakra-ui/react';
+import { useEffect, useState, FormEvent, useRef } from 'react';
+import { Text, Input, Button, Box, Textarea, Stack, Image, CheckboxGroup, Checkbox, Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper, useToast  } from '@chakra-ui/react';
 import { useParams, usePathname } from 'next/navigation';
 import { getEventById, getCommentsByEventId, createComment, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
+import { freeTicket } from '@/api/payment';
 import { Event, Comment, Location, Category } from '../../interfaces';
 import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie';
 
@@ -15,7 +27,7 @@ const EventPage = () => {
   const pathname = usePathname();
   const [event, setEvent] = useState<Event | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  
+  const toast = useToast();
   const [commentText, setCommentText] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [commentLoading, setCommentLoading] = useState(false);
@@ -30,8 +42,12 @@ const EventPage = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [hasCommented, setHasCommented] = useState<boolean>(false);
+  const [ticketCount, setTicketCount] = useState(1);
 
   const formattedThumbnail = event?.picture.replace(/\\/g, '/');
+
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const finalRef = useRef(null)
 
   useEffect(() => {
     const fetchEventDetails = async (eventId: number) => {
@@ -172,6 +188,31 @@ const EventPage = () => {
     return <Text className="max-container padding-container mx-auto p-4 mb-20">No event found</Text>;
   }
 
+  const handleBuyTicket = async () => {
+    try {
+      if(event.eventType === 'Free'){
+        const free = await freeTicket(event.id, event.availableSeats, ticketCount);
+        toast({
+          title: "Make Ticket successful.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        fetchEventDetails(event.id)
+      }else{
+        console.log("soon")
+      }
+    } catch (error) {
+      console.error("Failed to make ticket:", error);
+      toast({
+        title: "Make Ticket failed.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <div className="max-container padding-container mx-auto p-4 mb-20">
       <div className="w-full mb-8">
@@ -264,9 +305,9 @@ const EventPage = () => {
             
             <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4 text-center">
             <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
-              {userRole === 'Customer' && (
+              {userRole === 'Customer' && event.availableSeats > 0 && (
               <Button
-                onClick={handleBuyTicket}
+                onClick={onOpen}
                 isLoading={ticketLoading}
                 disabled={ticketLoading}
                 className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
@@ -305,6 +346,31 @@ const EventPage = () => {
             </div>
           </div>
         )}
+
+         <Modal isOpen={isOpen} onClose={onClose}>
+            <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>Book Ticket</ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                  <Text>Number of ticket</Text>
+                  <NumberInput defaultValue={1} min={1} max={event.availableSeats} value={ticketCount}
+                    onChange={(valueString) => setTicketCount(Number(valueString))}>
+                    <NumberInputField />
+                    <NumberInputStepper>
+                      <NumberIncrementStepper />
+                      <NumberDecrementStepper />
+                    </NumberInputStepper>
+                  </NumberInput>
+                </ModalBody>
+
+                <ModalFooter>
+                  <Button colorScheme='blue' mr={3} onClick={handleBuyTicket}>
+                    Book
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+          </Modal>
       </div>
     </div>
   );
