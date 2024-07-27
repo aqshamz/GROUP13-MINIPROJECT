@@ -1,39 +1,54 @@
 "use server"
 import { NextRequest, NextResponse } from 'next/server'
-import * as jose from 'jose'
-import * as jwt from 'jsonwebtoken'
-// import { decrypt } from '@/app/lib/session'
 import { cookies } from 'next/headers'
+import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie'; 
 
-const protectedRoutes = ['/event']
-const publicRoutes = ['/login', '/register']
+const routes = {
+    event: ['/event'],
+    transaction: ['/transaction'],
+    ticket: ['/ticket'],
+    management: ['/management'],
+    public: ['/login', '/register']
+};
 
 export default async function middleware(req: NextRequest) {
     try {
-        const path = req.nextUrl.pathname
-        const isProtectedRoute = protectedRoutes.includes(path)
-        const isPublicRoute = publicRoutes.includes(path)
+        const path = req.nextUrl.pathname;
 
-        const authToken = cookies().get('authToken')?.value as any
-
-        let session = null
-        if (authToken) {
-            session = await jwt.verify(authToken, "mySecretKey")
+        // Allow access to public routes
+        if (routes.public.includes(path)) {
+            return NextResponse.next();
         }
 
-        if (isProtectedRoute && !session) {
-            return NextResponse.redirect(new URL('/login', req.nextUrl))
+        // Get user data from cookies
+        const data = await getRoleAndUserIdFromCookie();
+        const role = data?.role;
+
+        // Define route requirements
+        const routeRequirements = [
+            { routes: routes.event, requiredRole: null },
+            { routes: routes.transaction, requiredRole: "Customer" },
+            { routes: routes.ticket, requiredRole: "Customer" },
+            { routes: routes.management, requiredRole: "Organizer" }
+        ];
+
+        // Check route requirements
+        for (const requirement of routeRequirements) {
+            if (requirement.routes.includes(path)) {
+                if (!data || (requirement.requiredRole && role !== requirement.requiredRole)) {
+                    return NextResponse.redirect(new URL('/login', req.nextUrl));
+                }
+                break;
+            }
         }
 
-        return NextResponse.next()
+        return NextResponse.next();
     } catch (err) {
-
-        return NextResponse.next()
-
+        // Redirect to login on any error
+        return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
-
 }
 
 export const config = {
     matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
-}
+};

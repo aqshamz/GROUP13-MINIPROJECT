@@ -13,6 +13,7 @@ import { PORT } from './config';
 import { EventRouter } from './routers/event.router';
 import { UserRouter } from './routers/user.router';
 import { PaymentRouter } from './routers/payment.router';
+import { ManagementRouter } from './routers/management.router';
 
 
 export default class App {
@@ -59,6 +60,7 @@ export default class App {
     const eventRouter = new EventRouter();
     const userRouter = new  UserRouter();
     const paymentRouter = new PaymentRouter();
+    const managementRouter = new ManagementRouter();
 
 
     this.app.get('/api', (req: Request, res: Response) => {
@@ -68,7 +70,7 @@ export default class App {
     this.app.use('/api/event', eventRouter.getRouter());
     this.app.use('/api/users', userRouter.getRouter());
     this.app.use('/api/payments', paymentRouter.getRouter());
-
+    this.app.use('/api/managements', managementRouter.getRouter());
   }
 
   public start(): void {
