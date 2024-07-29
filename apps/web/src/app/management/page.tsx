@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Box, Flex, Text, Icon, Spinner, Link } from "@chakra-ui/react";
-import { FaTicketAlt, FaCalendarAlt, FaExchangeAlt } from "react-icons/fa";
+import { FaTicketAlt, FaCalendarAlt, FaExchangeAlt, FaChartBar, FaArrowCircleRight } from "react-icons/fa";
 import { getEventOrganizer, getTransactionOrganizer, getTicketOrganizer } from "@/api/management";
 
 export default function Transactions() {
@@ -61,16 +61,16 @@ export default function Transactions() {
       ) : (
         <Flex
           direction={{ base: "column", md: "row" }} // Responsive direction
-          align="stretch" // Stretch boxes to fill container height
-          gap={4}
           wrap="wrap" // Allow wrapping on smaller screens
+          justify="space-between"
+          gap={4}
         >
           <Box
             p={4}
             bg="green.100"
             borderRadius="md"
             shadow="md"
-            width={{ base: "100%", md: "calc(33.333% - 8px)" }} // Adjust width for row layout
+            width={{ base: "100%", md: "calc(50% - 8px)" }} // Adjust width for row layout
             height="200px" // Fixed height for all boxes
             textAlign="center"
             display="flex"
@@ -83,8 +83,8 @@ export default function Transactions() {
               Transactions
             </Text>
             <Text fontSize="2xl">{transactionData}</Text>
-            <Link href="/management/transaction">
-              See Details
+            <Link href="/management/transaction" mt={2} color="green.600" fontWeight="bold">
+              See Details <Icon as={FaArrowCircleRight} boxSize={4} color="green.600" />
             </Link>
           </Box>
           <Box
@@ -92,7 +92,7 @@ export default function Transactions() {
             bg="teal.100"
             borderRadius="md"
             shadow="md"
-            width={{ base: "100%", md: "calc(33.333% - 8px)" }} // Adjust width for row layout
+            width={{ base: "100%", md: "calc(50% - 8px)" }} // Adjust width for row layout
             height="200px" // Fixed height for all boxes
             textAlign="center"
             display="flex"
@@ -105,8 +105,8 @@ export default function Transactions() {
               Events Created
             </Text>
             <Text fontSize="2xl">{eventData}</Text>
-            <Link href="/management/event">
-              See Details
+            <Link href="/management/event" mt={2} color="teal.600" fontWeight="bold">
+              See Details <Icon as={FaArrowCircleRight} boxSize={4} color="teal.600" />
             </Link>
           </Box>
           <Box
@@ -114,7 +114,7 @@ export default function Transactions() {
             bg="blue.100"
             borderRadius="md"
             shadow="md"
-            width={{ base: "100%", md: "calc(33.333% - 8px)" }} // Adjust width for row layout
+            width={{ base: "100%", md: "calc(50% - 8px)" }} // Adjust width for row layout
             height="200px" // Fixed height for all boxes
             textAlign="center"
             display="flex"
@@ -127,8 +127,29 @@ export default function Transactions() {
               Total Tickets Created
             </Text>
             <Text fontSize="2xl">{ticketData}</Text>
-            <Link href="/management/ticket">
-              See Details
+            <Link href="/management/ticket" mt={2} color="blue.600" fontWeight="bold">
+              See Details <Icon as={FaArrowCircleRight} boxSize={4} color="blue.600" />
+            </Link>
+          </Box>
+          <Box
+            p={4}
+            bg="cyan.100"
+            borderRadius="md"
+            shadow="md"
+            width={{ base: "100%", md: "calc(50% - 8px)" }} // Adjust width for row layout
+            height="200px" // Fixed height for all boxes
+            textAlign="center"
+            display="flex"
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Icon as={FaChartBar} boxSize={6} color="cyan.600" />
+            <Text fontSize="lg" fontWeight="bold" mt={2}>
+              Statistics
+            </Text>
+            <Link href="/management/statistic" mt={2} color="cyan.600" fontWeight="bold">
+              See Details <Icon as={FaArrowCircleRight} boxSize={4} color="cyan.600" />
             </Link>
           </Box>
         </Flex>

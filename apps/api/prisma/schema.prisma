@@ -55,12 +55,9 @@ model User {
   events            Event[]
   tickets           Ticket[]
   comments          Comment[]
-  statistics        Statistic[]
-  // referralsGiven    Referral[]  @relation("Referrer")
-  // referralsReceived Referral[]  @relation("Referred")
   transactions      Transaction[]
 
-  @@map("users") // if you want to use snake_case format
+  @@map("users")
 }
 
 model UserPoint {
@@ -72,7 +69,7 @@ model UserPoint {
   expiresAt    DateTime
 
   // Relationships
-  @@map("userpoints") // if you want to use snake_case format
+  @@map("userpoints")
 }
 
 model UserDiscount {
@@ -84,7 +81,7 @@ model UserDiscount {
   createdAt           DateTime   @default(now())
   expiresAt           DateTime
   // Relationships
-  @@map("userdiscounts") // if you want to use snake_case format
+  @@map("userdiscounts")
 }
 
 model Category {
@@ -96,7 +93,7 @@ model Category {
   // Relationships
   events    Event[]
 
-  @@map("categories") // if you want to use snake_case format
+  @@map("categories")
 }
 
 model Event {
@@ -122,7 +119,6 @@ model Event {
   tickets      Ticket[]
   eventdiscounts    EventDiscount[]
   transactions Transaction[]
-  statistics   Statistic[]
 
   @@map("events")
 }
@@ -177,36 +173,22 @@ model EventDiscount {
 }
 
 model Transaction {
-  id              Int                 @id @default(autoincrement())
-  user            User                @relation(fields: [userId], references: [id])
-  userId          Int
-  event           Event               @relation(fields: [eventId], references: [id])
-  eventId         Int
-  ticketAmount    Int
-  totalAmount     Decimal             @db.Decimal(10, 2)
-  pointAmount     Int             
-  discountAmount  Decimal             @db.Decimal(10, 2)
-  finalAmount     Decimal             @db.Decimal(10, 2)
-  status          TransactionStatus
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id                  Int                 @id @default(autoincrement())
+  user                User                @relation(fields: [userId], references: [id])
+  userId              Int
+  event               Event               @relation(fields: [eventId], references: [id])
+  eventId             Int
+  ticketAmount        Int
+  totalAmount         Decimal             @db.Decimal(10, 2)
+  pointAmount         Int             
+  discountAmount      Decimal             @db.Decimal(10, 2)
+  finalAmount         Decimal             @db.Decimal(10, 2)
+  status              TransactionStatus
+  statusUserDiscount  Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   comments      Comment[]
 
   @@map("transactions")
-}
-// pointamount tambahin
-
-model Statistic {
-  id              Int         @id @default(autoincrement())
-  organizer       User        @relation(fields: [organizerId], references: [id])
-  organizerId     Int
-  event           Event       @relation(fields: [eventId], references: [id])
-  eventId         Int
-  totalAttendees  Int
-  totalRevenue    Decimal     @db.Decimal(10, 2)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@map("statistics")
 }
