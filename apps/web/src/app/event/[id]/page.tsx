@@ -311,11 +311,7 @@ const EventPage = () => {
             <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
               {userRole === 'Customer' && event.availableSeats > 0 && (
               <Button
-<<<<<<< HEAD
-                // onClick={handleBuyTicket}
-=======
                 onClick={onOpen}
->>>>>>> 256f99b31a06edc8915e828e67e72106c24797f8
                 isLoading={ticketLoading}
                 disabled={ticketLoading}
                 className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
