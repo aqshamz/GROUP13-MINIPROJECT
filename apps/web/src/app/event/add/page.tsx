@@ -35,6 +35,7 @@ export default function EventAdd() {
   const [organizerId, setOrganizerId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     handleGetCategories();
@@ -59,7 +60,51 @@ export default function EventAdd() {
     }
   };
 
+  const validateFields = () => {
+    let fieldErrors: { [key: string]: string } = {};
+    if (!name) fieldErrors.name = "Name is required";
+    if (!description) fieldErrors.description = "Description is required";
+    if (!datetime) {
+      fieldErrors.datetime = "Date is required";
+    } else {
+      const eventDate = new Date(datetime);
+      const currentDate = new Date();
+      if (eventDate <= currentDate) {
+        fieldErrors.datetime = "The date must be in the future";
+      }
+    }
+    if (!locationId) fieldErrors.locationId = "Location is required";
+    if (!categoryId) fieldErrors.categoryId = "Category is required";
+    if (!availableSeats) fieldErrors.availableSeats = "Available seats are required";
+    if (eventType === "Paid" && !price) fieldErrors.price = "Price is required for paid events";
+
+    if (picture) {
+      const pictureFormat = picture.type.split("/")[1].toLowerCase();
+      if (!["jpeg", "jpg", "png"].includes(pictureFormat)) {
+        fieldErrors.picture = "Picture must be in JPEG, JPG, or PNG format";
+      }
+      
+    } else {
+      fieldErrors.picture = "Picture is required";
+    }
+
+    // Validate thumbnail
+    if (thumbnail) {
+      const thumbnailFormat = thumbnail.type.split("/")[1].toLowerCase();
+      if (!["jpeg", "jpg", "png"].includes(thumbnailFormat)) {
+        fieldErrors.thumbnail = "Thumbnail must be in JPEG, JPG, or PNG format";
+      }
+      
+    } else {
+      fieldErrors.thumbnail = "Thumbnail is required";
+    }
+
+    setErrors(fieldErrors);
+    return Object.keys(fieldErrors).length === 0;
+  };
+
   const handleCreateEvent = async () => {
+    if (!validateFields()) return;
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -81,10 +126,10 @@ export default function EventAdd() {
       const response = await createEvent(formData);
       console.log("Event created successfully:", response.data);
       window.location.href = `/event`;
-      // Optionally, you can redirect or show a success message here
+      
     } catch (error) {
       console.error("Error creating event:", error);
-      // Handle error state or show an error message
+      
     }
   };
 
@@ -122,111 +167,142 @@ export default function EventAdd() {
   };
 
   return (
-    <Container>
-      <Text as={"h1"}> Event Add </Text>
-      <hr />
-      <p> This is Event page </p>
+    <div className="max-container padding-container mx-auto p-6">
+      <Text as={"h1"} className="text-2xl font-bold mb-4">Event Add</Text>
+      
 
       <form>
-        <Card>
+        <Card className="shadow-md">
           <CardBody>
-            <FormControl>
+            <FormControl isInvalid={!!errors.name} className="mb-4">
               <FormLabel>Name</FormLabel>
               <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="border p-2 rounded"
               />
+              {errors.name && <Text color="red.500">{errors.name}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.description} className="mb-4">
               <FormLabel>Description</FormLabel>
               <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter event description here"
-              size="md"
-            />
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter event description here"
+                size="md"
+                className="border p-2 rounded"
+              />
+              {errors.description && <Text color="red.500">{errors.description}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.datetime} className="mb-4">
               <FormLabel>Date</FormLabel>
               <Input
                 type="date"
                 placeholder="Event Date"
                 value={datetime}
                 onChange={(e) => setDateTime(e.target.value)}
+                className="border p-2 rounded"
               />
+              {errors.datetime && <Text color="red.500">{errors.datetime}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.locationId} className="mb-4">
               <FormLabel>Location</FormLabel>
-              <Select placeholder="Select location" onChange={handleLocationChange}>
-                
+              <Select
+                placeholder="Select location"
+                onChange={handleLocationChange}
+                className="border p-2 rounded"
+              >
                 {locations.map((location) => (
                   <option key={location.id} value={location.id}>
                     {location.name}
                   </option>
                 ))}
               </Select>
+              {errors.locationId && <Text color="red.500">{errors.locationId}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.categoryId} className="mb-4">
               <FormLabel>Category</FormLabel>
-              <Select placeholder="Select category" onChange={handleCategoryChange}>
-                
+              <Select
+                placeholder="Select category"
+                onChange={handleCategoryChange}
+                className="border p-2 rounded"
+              >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
                 ))}
               </Select>
+              {errors.categoryId && <Text color="red.500">{errors.categoryId}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.availableSeats} className="mb-4">
               <FormLabel>Available Seats</FormLabel>
               <Input
-                type="text"
+                type="number"
                 value={availableSeats}
                 onChange={(e) => setAvailableSeats(e.target.value)}
+                className="border p-2 rounded"
               />
+              {errors.availableSeats && <Text color="red.500">{errors.availableSeats}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.picture} className="mb-4">
               <FormLabel>Picture</FormLabel>
-              <Input type="file" onChange={handlePictureChange} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handlePictureChange}
+                className="border p-2 rounded"
+              />
+              {errors.picture && <Text color="red.500">{errors.picture}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl isInvalid={!!errors.thumbnail} className="mb-4">
               <FormLabel>Thumbnail</FormLabel>
-              <Input type="file" onChange={handleThumbnailChange} />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailChange}
+                className="border p-2 rounded"
+              />
+              {errors.thumbnail && <Text color="red.500">{errors.thumbnail}</Text>}
             </FormControl>
-            <FormControl>
+            <FormControl className="mb-4">
               <FormLabel>Event Type</FormLabel>
               <Checkbox
                 isChecked={eventType === "Free"}
                 onChange={() => handleEventTypeChange("Free")}
+                className="mr-2"
               >
                 Free
               </Checkbox>
               <Checkbox
                 isChecked={eventType === "Paid"}
                 onChange={() => handleEventTypeChange("Paid")}
+                className="mr-2"
               >
                 Paid
               </Checkbox>
             </FormControl>
             {eventType === "Paid" && (
-              <FormControl>
-                <FormLabel>Price</FormLabel>
+              <FormControl isInvalid={!!errors.price} className="mb-4">
+                <FormLabel>Price (IDR)</FormLabel>
                 <Input
-                  type="text"
+                  type="number"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  className="border p-2 rounded"
                 />
+                {errors.price && <Text color="red.500">{errors.price}</Text>}
               </FormControl>
             )}
             <FormControl>
-              <Button color={"blue.500"} onClick={handleCreateEvent}>
+              <Button colorScheme="blue" onClick={handleCreateEvent} className="bg-blue-700 text-white p-2 rounded">
                 Submit
               </Button>
             </FormControl>
           </CardBody>
         </Card>
       </form>
-    </Container>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 // Event interface
 export interface Event {
     id: number;
-    title: string;
+    name: string;
     description: string;
     datetime: string; // Use string or Date based on your preference
     locationId: number;
@@ -33,11 +33,13 @@ export interface Event {
     text: string;
     userId: number;
     eventId: number;
+    rating: string;
     user: {
       id: number;
       name: string;
       email: string;
     };
+    
   }
   
   export interface User {

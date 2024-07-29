@@ -47,7 +47,7 @@ const EventPage = () => {
   const [useFinalAmount, setUseFinalAmount] = useState<number>(0);
   // for make transaction
 
-  const formattedThumbnail = event?.picture.replace(/\\/g, '/');
+  const formattedThumbnail = event?.picture?.replace(/\\/g, '/') || '';
 
   const { isOpen, onOpen, onClose } = useDisclosure()
   const finalRef = useRef(null)
@@ -118,8 +118,9 @@ const EventPage = () => {
     e.preventDefault();
     setCommentLoading(true);
 
-    if (!userId || !commentText || rating === 0) {
-      setCommentError('Please fill in both the comment text and the rating.');
+    if (!userId || !commentText || !rating ) {
+      setCommentError('Text amd Rating are Required.');
+      console.error('User ID, comment text, and rating are required');
       setCommentLoading(false);
       return;
     }
@@ -149,6 +150,10 @@ const EventPage = () => {
     } finally {
       setCommentLoading(false);
     }
+  };
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
   };
 
   const handleApplyDiscount = async () => {
@@ -375,7 +380,7 @@ const EventPage = () => {
                   <ReactStars
                     count={5}
                     value={rating}
-                    onChange={(newRating) => setRating(newRating)}
+                    onChange={handleRatingChange}
                     size={24}
                     color2={'#ffd700'}
                     half={false}
