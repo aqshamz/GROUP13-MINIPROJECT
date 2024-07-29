@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Text, UnorderedList, ListItem, Select, Button, Box, Image, Input  } from "@chakra-ui/react";
 import { getAllEvents, getAllCategories, getEventsByCategory, getAllLocations, getEventsByLocation, getEventsByCategoryAndLocation} from "@/api/event";
-import { Event, Category } from "../interfaces";
+import { Event, Category, Location } from "../interfaces";
 import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie'; 
 import Link from "next/link";
-import { debounce } from "@/utils/debounce";
+
 interface Props {
   events: Event[];
 }
@@ -90,7 +90,7 @@ export default function Events({ events }: Props) {
     } catch (error) {
       console.error("Failed to fetch locations:", error);
     }
-  };
+  }; 
 
   const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const categoryId = event.target.value ? parseInt(event.target.value) : null;
@@ -172,7 +172,7 @@ export default function Events({ events }: Props) {
         <UnorderedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0 m-0" style={{ listStyleType: 'none' }}>
           {eventData.length > 0 ? (
             eventData.map((item: Event) => {
-              const formattedThumbnail = item.thumbnail.replace(/\\/g, '/');
+              const formattedThumbnail = item.thumbnail?.replace(/\\/g, '/') || '';
               const encodedThumbnail = formattedThumbnail.split('/').map(encodeURIComponent).join('/');
               const truncatedDescription = item.description.length > 80
                 ? `${item.description.slice(0, 80)}...`

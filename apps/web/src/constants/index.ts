@@ -1,42 +1,34 @@
-// NAVIGATION
-export const NAV_LINKS = [
-    { href: '/', key: 'home', label: 'Home' },
-    { href: '/', key: 'login', label: 'Login' },
-    { href: '/event', key: 'event', label: 'Events' },
-    { href: '/transaction', key: 'transaction', label: 'Transactions' },
-    { href: '/ticket', key: 'ticket', label: 'Tickets' },
-    { href: '/management', key: 'management', label: 'Managements' },
-  ];
+
 
 // FEATURES SECTION
 export const FEATURES = [
   {
-    title: 'Real maps can be offline',
+    title: 'Explore Events Across Indonesia',
     icon: '/map.svg',
     variant: 'green',
     description:
-      'We provide a solution for you to be able to use our application when climbing, yes offline maps you can use at any time there is no signal at the location',
+      'Discover and attend events happening all over the country with our comprehensive event directory. Find the perfect event no matter where you are in Indonesia.',
   },
   {
-    title: 'Set an adventure schedule',
+    title: 'Find Upcoming Events',
     icon: '/calendar.svg',
     variant: 'green',
     description:
-      "Schedule an adventure with friends. On holidays, there are many interesting offers from Hilink. That way, there's no more discussion",
+      "Easily search for and discover upcoming events by date and category to ensure you never miss out on what's happening next.",
   },
   {
-    title: 'Technology using augment reality',
+    title: 'Diverse Event Categories',
     icon: '/tech.svg',
     variant: 'green',
     description:
-      'Technology uses augmented reality as a guide to your hiking trail in the forest to the top of the mountain. Already supported by the latest technology without an internet connection',
+      "Explore a wide range of event types tailored to your interests. Whether you're looking for something educational or entertaining, we've got it all covered",
   },
   {
-    title: 'Many new locations every month',
+    title: 'Find All Events Near You',
     icon: '/location.svg',
     variant: 'orange',
     description:
-      'Lots of new locations every month, because we have a worldwide community of climbers who share their best experiences with climbing',
+      "Discover local happenings right in your neighborhood with our location-based event search. Ensuring you’re always in the loop with what's happening nearby.",
   },
 ];
 
@@ -49,14 +41,12 @@ export const FOOTER_LINKS = [
       'About Hilink',
       'Press Releases',
       'Environment',
-      'Jobs',
-      'Privacy Policy',
-      'Contact Us',
+      
     ],
   },
   {
-    title: 'Our Community',
-    links: ['Climbing xixixi', 'Hiking hilink', 'Hilink kinthill'],
+    title: 'Our Partners',
+    links: ['Event Organizer', 'Event Lighting', 'Decoration'],
   },
 ];
 
@@ -64,7 +54,7 @@ export const FOOTER_CONTACT_INFO = {
   title: 'Contact Us',
   links: [
     { label: 'Admin Officer', value: '123-456-7890' },
-    { label: 'Email Officer', value: 'hilink@akinthil.com' },
+    { label: 'Email Officer', value: 'admin@hilink.com' },
   ],
 };
 
@@ -73,8 +63,8 @@ export const SOCIALS = {
   links: [
     '/facebook.svg',
     '/instagram.svg',
-    '/twitter.svg',
+    "/twitter.svg",
     '/youtube.svg',
-    '/wordpress.svg',
+    
   ],
 };

@@ -113,7 +113,9 @@ export const getAllEvents = async (req: Request, res: Response) => {
     }
 
     const total = await prisma.event.count({ where });
-    const events = await prisma.event.findMany({ skip, take, where });
+    const events = await prisma.event.findMany({ skip, take, where, orderBy: {
+      id: 'desc', 
+    } });
 
     console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
@@ -224,7 +226,9 @@ export const getEventsByCategory = async (req: Request, res: Response) => {
     };
 
     const total = await prisma.event.count({ where });
-    const events = await prisma.event.findMany({ skip, take, where });
+    const events = await prisma.event.findMany({ skip, take, where, orderBy: {
+      id: 'desc', 
+    } });
 
     console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
@@ -302,7 +306,9 @@ export const getEventsByLocation = async (req: Request, res: Response) => {
     };
 
     const total = await prisma.event.count({ where });
-    const events = await prisma.event.findMany({ skip, take, where });
+    const events = await prisma.event.findMany({ skip, take, where, orderBy: {
+      id: 'desc', 
+    } });
 
     console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
@@ -339,7 +345,9 @@ export const getEventsByCategoryAndLocation = async (req: Request, res: Response
     };
 
     const total = await prisma.event.count({ where });
-    const events = await prisma.event.findMany({ skip, take, where });
+    const events = await prisma.event.findMany({ skip, take, where, orderBy: {
+      id: 'desc', 
+    } });
 
     console.log(`Total events: ${total}`);
     console.log(`Fetched events: ${events.length}`);
@@ -544,215 +552,11 @@ export const getCommentsByEvent = async (req: Request, res: Response) => {
   }
 };
 
-// export const getCommentByEventId = async (req: Request, res: Response): Promise<void> => {
-//   const { eventId } = req.params;
-
-//   try {
-//     // Check if eventId is valid
-//     if (!eventId || isNaN(Number(eventId))) {
-//       res.status(400).json({ error: "Invalid event ID" });
-//       return;
-//     }
-
-//     // Check if the event exists
-//     const eventExists = await prisma.event.findUnique({
-//       where: {
-//         id: Number(eventId),
-//       },
-//     });
-
-//     if (!eventExists) {
-//       res.status(404).send({ message: "Event does not exist" });
-//       return;
-//     }
-
-//     // Get comments for the event
-//     const comments = await prisma.comment.findMany({
-//       where: {
-//         eventId: Number(eventId),
-//       },
-//       include: {
-//         user: {
-//           select: {
-//             id: true,
-//             name: true,
-//             email: true,
-//           },
-//         },
-//       },
-//     });
-
-//     res.status(200).send({ message: "Comments retrieved successfully", data: comments });
-//   } catch (err) {
-//     console.error("Error retrieving comments:", err);
-//     res.status(500).send({ message: "Error retrieving comments", error: err });
-//   }
-// };
-
-// // Buy Ticket
-// export const buyTicket = async (req: Request, res: Response): Promise<void> => {
-//   const { eventId } = req.params;
-//   const { pointAmount, discountCode } = req.body;
-
-//   try {
-//     if (!eventId || isNaN(parseInt(eventId))) {
-//       res.status(400).json({ error: 'Invalid event ID' });
-//       return;
-//     }
-
-//     const userId = req.user?.id;
-//     if (!userId || isNaN(parseInt(userId))) {
-//       res.status(400).json({ error: 'Invalid user ID' });
-//       return;
-//     }
-
-//     const event = await prisma.event.findUnique({
-//       where: {
-//         id: parseInt(eventId),
-//       },
-//     });
-
-//     if (!event) {
-//       res.status(400).send({ message: "Event does not exist" });
-//       return;
-//     }
-
-//     let discountAmount = 0;
-
-//     if (discountCode) {
-//       const currentDate = new Date();
-
-//       const eventDiscount = await prisma.eventDiscount.findFirst({
-//         where: {
-//           eventId: parseInt(eventId),
-//           code: discountCode,
-//           validFrom: {
-//             lte: currentDate,
-//           },
-//           validTo: {
-//             gte: currentDate,
-//           },
-//         },
-//       });
-
-//       console.log("Event Discount:", eventDiscount);
-
-//       if (eventDiscount) {
-//         console.log(`Event Price: ${event.price.toNumber()}`);
-//         console.log(`Discount Percentage: ${eventDiscount.discountPercentage}`);
-//         discountAmount = (event.price.toNumber() * eventDiscount.discountPercentage) / 100;
-//         console.log("Discount Amount:", discountAmount);
-//       } else {
-//         console.log("No valid discount found for the provided code.");
-        
-//       }
-//     }
-
-//     const totalAmount = event.price.toNumber();
-//     const pointAmountValue = pointAmount ? parseFloat(pointAmount) : 0;
-//     const finalAmount = totalAmount - discountAmount - pointAmountValue;
-
-//     console.log("Total Amount:", totalAmount);
-//     console.log("Point Amount Value:", pointAmountValue);
-//     console.log("Final Amount:", finalAmount);
-
-//     const transaction = await prisma.transaction.create({
-//       data: {
-//         userId: parseInt(userId), // Parse userId to integer
-//         eventId: parseInt(eventId),
-//         totalAmount: totalAmount,
-//         pointAmount: pointAmountValue,
-//         discountAmount: discountAmount,
-//         finalAmount: finalAmount,
-//         status: "Pending",
-//       },
-//     });
-
-//     res.status(200).send({ message: "Ticket purchased successfully", data: transaction });
-//   } catch (err) {
-//     console.error("Error purchasing ticket:", err);
-//     res.status(500).send({ message: "Error purchasing ticket", error: err });
-//   }
-// };
 
 
 
 
 
-// export const buyTicket = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-//   const { eventId } = req.params; // Extract eventId from request parameters
-//   const { userId } = req.body; // Extract userId from request body
 
-//   try {
-//     // Check if the user exists
-//     const userExists = await prisma.user.findUnique({
-//       where: { id: parseInt(userId) },
-//     });
 
-//     if (!userExists) {
-//       return res.status(400).send({ message: "User does not exist" });
-//     }
-
-//     // Check if the event exists and has available seats
-//     const event = await prisma.event.findUnique({
-//       where: { id: parseInt(eventId) }, // Ensure eventId is properly parsed to integer
-//     });
-
-//     if (!event) {
-//       return res.status(404).send({ message: "Event not found" });
-//     }
-
-//     if (event.availableSeats <= 0) {
-//       return res.status(400).send({ message: "No available seats for this event" });
-//     }
-
-//     // Create a ticket for the user and decrement availableSeats
-//     const createdTicket = await prisma.$transaction(async (prisma) => {
-//         const ticket = await prisma.ticket.create({
-//           data: {
-//             userId: parseInt(userId),
-//             eventId: parseInt(eventId),
-//           },
-//         });
-
-//       await prisma.event.update({
-//         where: { id: parseInt(eventId) },
-//         data: {
-//           availableSeats: {
-//             decrement: 1,
-//           },
-//         },
-//       });
-
-//       return ticket;
-//     });
-
-//     return res.status(200).send({ message: "Ticket purchased successfully", data: createdTicket });
-//   } catch (err) {
-//     console.error("Error purchasing ticket:", err);
-//     return res.status(500).send({ message: "Error purchasing ticket", error: err });
-//   }
-// };
-
-// export const checkUserTicket = async (req: Request, res: Response) => {
-//   const { userId, eventId } = req.body;
-
-//   try {
-//     const ticket = await prisma.ticket.findFirst({
-//       where: {
-//         userId: parseInt(userId),
-//         eventId: parseInt(eventId),
-//       },
-//     });
-
-//     if (!ticket) {
-//       return res.status(400).send({ message: "User has not bought a ticket for this event" });
-//     }
-
-//     return res.status(200).send({ message: "User has bought a ticket for this event" });
-//   } catch (error) {
-//     console.error('Error checking user ticket:', error);
-//     return res.status(500).send({ message: "Internal Server Error" });
-//   }
-// };
 

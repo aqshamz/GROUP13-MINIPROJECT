@@ -44,7 +44,7 @@ const EventPage = () => {
   const [hasCommented, setHasCommented] = useState<boolean>(false);
   const [ticketCount, setTicketCount] = useState(1);
 
-  const formattedThumbnail = event?.picture.replace(/\\/g, '/');
+  const formattedThumbnail = event?.picture?.replace(/\\/g, '/') || '';
 
   const { isOpen, onOpen, onClose } = useDisclosure()
   const finalRef = useRef(null)
@@ -109,7 +109,7 @@ const EventPage = () => {
     e.preventDefault();
     setCommentLoading(true);
 
-    if (!userId || !commentText || rating === 0) {
+    if (!userId || !commentText || !rating ) {
       console.error('User ID, comment text, and rating are required');
       setCommentLoading(false);
       return;
@@ -138,6 +138,10 @@ const EventPage = () => {
     } finally {
       setCommentLoading(false);
     }
+  };
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
   };
 
   const handleApplyDiscount = async () => {
@@ -268,7 +272,7 @@ const EventPage = () => {
                   <ReactStars
                     count={5}
                     value={rating}
-                    onChange={(newRating) => setRating(newRating)}
+                    onChange={handleRatingChange}
                     size={24}
                     color2={'#ffd700'}
                     half={false}

@@ -41,10 +41,10 @@ export class EventRouter {
     this.router.post('/add', verifyToken, organizerGuard, createEvent);
     this.router.post('/events/:eventId/discounts', createEventDiscount);
     this.router.post('/events/:eventId/apply-discount', applyEventDiscount);
-    // this.router.post('/events/:eventId/tickets', verifyToken, buyTicket);
+   
     this.router.post('/comments', verifyToken, createComment);
     
-    // this.router.post('/:eventId/tickets', buyTicket);
+    
   }
 
   getRouter(): Router {
