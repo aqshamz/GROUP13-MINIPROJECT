@@ -33,7 +33,7 @@ export default function Transactions() {
   const handlePay = async (transaction: Transaction, type: number) => {
     try {
       // console.log(transaction)
-      const test = await finishTransaction(transaction.id, type);
+      const test = await finishTransaction(transaction.id, type, transaction.statusUserDiscount);
       // console.log(test)
       toast({
         title: "Transaction successful.",

@@ -38,6 +38,38 @@ export class PaymentController {
       }
     }
 
+    async getSpecialcode(req: Request, res: Response) {
+      const { id, code } = req.body;
+      const today = new Date();
+        try {
+          if(code){
+            const eventCodeData = await prisma.eventDiscount.aggregate({
+              where: {
+                eventId: parseInt(id),
+                code,
+                validTo: { gt: today }
+              },
+              _sum: {
+                discountPercentage: true, 
+              },
+            });
+            return res.status(200).send({
+              message: "Success",
+              data: eventCodeData._sum.discountPercentage,
+            });
+          }else{
+            return res.status(200).send({
+              message: "Success",
+              data: 0,
+            });
+          }
+    
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: (error as Error).message });
+        }
+      }
+
     async getUserDiscountData(req: Request, res: Response) {
       const today = new Date();
       try {
@@ -50,7 +82,8 @@ export class PaymentController {
         const discountData = await prisma.userDiscount.findFirst({
           where: {
             userId: parseInt(user.id), 
-            expiresAt: { gt: today }, 
+            expiresAt: { gt: today },
+            status: "Available" 
           },
         });
     
@@ -58,7 +91,7 @@ export class PaymentController {
           return res.status(200).send({ message: "No valid discount found" });
         }
     
-        return res.status(200).send({ message: "Success", data: discountData.discountPercentage });
+        return res.status(200).send({ message: "Success", data: discountData });
       } catch (error) {
         console.error(error);
         res.status(500).json({ message: (error as Error).message });
@@ -112,6 +145,7 @@ export class PaymentController {
       const { eventId, ticketAmount, totalAmount, pointAmount, discountAmount, finalAmount, discountId } = req.body;
   
       try {
+
         const transaction = await prisma.transaction.create({
           data: { userId: Number(user.id), 
                   eventId: Number(eventId), 
@@ -120,7 +154,8 @@ export class PaymentController {
                   pointAmount: Number(pointAmount),
                   discountAmount: Number(discountAmount),
                   finalAmount: Number(finalAmount),
-                  status: "Pending"
+                  status: "Pending",
+                  statusUserDiscount: discountId
                  },
         });
   
@@ -157,7 +192,7 @@ export class PaymentController {
         throw new Error('Unauthorized');
       }
       
-      const { id, type } = req.body;
+      const { id, type, discountId } = req.body;
   
       try {
         let status;
@@ -193,23 +228,25 @@ export class PaymentController {
           throw new Error('Error Payment');
         }
 
+        if(status === "Cancelled"){
+            if(Number(discountId) !== 0){
+              const discount = await prisma.userDiscount.update({
+                  data:{
+                      status:"Available",
+                  },
+                  where: {
+                      id: parseInt(discountId)
+                  }
+              })
+    
+              if(!discount){
+                throw new Error('Error Payment');
+              }
+            }
+        }
+
         if(status === "Completed"){
-          //discount
-          // if(parseInt(discountUser) !== 0){
-          //   const discount = await prisma.userDiscount.update({
-          //       data:{
-          //           status:"Used",
-          //       },
-          //       where: {
-          //           id: parseInt(discountUser)
-          //       }
-          //   })
-  
-          //   if(!discount){
-          //     throw new Error('Error Payment');
-          //   }
-          // }
-  
+
           // point
           const today = new Date();
           let point = transactionData.pointAmount;
