@@ -119,7 +119,7 @@ const EventPage = () => {
     setCommentLoading(true);
 
     if (!userId || !commentText || !rating ) {
-      setCommentError('Text amd Rating are Required.');
+      setCommentError('Text and Rating are Required.');
       console.error('User ID, comment text, and rating are required');
       setCommentLoading(false);
       return;
@@ -365,7 +365,7 @@ const EventPage = () => {
             )}
           </div>
 
-          {userRole === 'Customer' && (
+          {userRole === 'Customer' && !isEventInFuture() && (
             <form onSubmit={handleCommentSubmit} className="mb-8">
               <Stack spacing={3}>
                 <Textarea
@@ -394,6 +394,7 @@ const EventPage = () => {
             </form>
           )}
 
+          {!isEventInFuture() && (
             <div className="mt-8">
               <Text as="h2" className="text-2xl font-bold mb-4">Comments</Text>
               {comments?.length === 0 ? (
@@ -408,6 +409,7 @@ const EventPage = () => {
                 ))
               )}
             </div>
+          )}
           
         </div>
 
