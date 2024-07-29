@@ -6,8 +6,8 @@ export async function getRoleAndUserIdFromCookie() {
   if (authToken) {
     try {
       const tokenData = await jose.jwtVerify(authToken, new TextEncoder().encode("mySecretKey"));
-      const payload = tokenData.payload as { role: string, id: number };
-      return { role: payload.role, userId: payload.id };
+      const payload = tokenData.payload as { role: string; id: number; username: string };
+      return { role: payload.role, userId: payload.id, username: payload.username };
     } catch (err) {
       console.error("Error in getRoleAndUserIdFromCookie:", err);
       return null;
