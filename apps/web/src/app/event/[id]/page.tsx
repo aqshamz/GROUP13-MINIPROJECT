@@ -1,23 +1,11 @@
 "use client"
 
-
 import { useEffect, useState, FormEvent, useRef } from 'react';
-import { Text, Input, Button, Box, Textarea, Stack, Image, CheckboxGroup, Checkbox, Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper, useToast  } from '@chakra-ui/react';
+import { Text, Input, Button, Box, Textarea, Stack, Image, CheckboxGroup, Checkbox, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper, useToast } from '@chakra-ui/react';
 import { useParams, usePathname } from 'next/navigation';
 import { getEventById, getCommentsByEventId, createComment, getCategoryById, getLocationById, applyEventDiscount } from '@/api/event';
-import { freeTicket } from '@/api/payment';
-import { Event, Comment, Location, Category } from '../../interfaces';
+import { freeTicket, getUserDiscount, getUserPoint, getEventDiscount, orderTicket } from '@/api/payment';
+import { Event, Comment, Location, Category, UserDiscount } from '../../interfaces';
 import { getRoleAndUserIdFromCookie } from '@/utils/roleFromCookie';
 
 import ReactStars from 'react-stars';
@@ -33,7 +21,6 @@ const EventPage = () => {
   const [commentLoading, setCommentLoading] = useState(false);
   const [ticketLoading, setTicketLoading] = useState(false);
   const [discountCode, setDiscountCode] = useState<string>('');
-  const [discountResult, setDiscountResult] = useState<{ message: string, discountedPrice?: number } | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountApplied, setDiscountApplied] = useState(false);
   const [location, setLocation] = useState<Location | null>(null);
@@ -43,6 +30,22 @@ const EventPage = () => {
   const [rating, setRating] = useState<number>(0);
   const [hasCommented, setHasCommented] = useState<boolean>(false);
   const [ticketCount, setTicketCount] = useState(1);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  
+  // handle paid
+  const [point, setPoint] = useState<number>(0);
+  const [discountEvent, setDiscountEvent] = useState<number>(0);
+  const [discountUser, setDiscountUser] = useState<UserDiscount | null>(null);
+  const [useUserDiscount, setUseUserDiscount] = useState(false);
+  const [usePoints, setUsePoints] = useState(false);
+  // handle paid
+
+  // for make transactions
+  const [useTotalAmount, setUseTotalAmount] = useState<number>(0);
+  const [usePointAmount, setUsePointAmount] = useState<number>(0);
+  const [useDiscountAmount, setUseDiscountAmount] = useState<number>(0);
+  const [useFinalAmount, setUseFinalAmount] = useState<number>(0);
+  // for make transaction
 
   const formattedThumbnail = event?.picture?.replace(/\\/g, '/') || '';
 
@@ -59,6 +62,12 @@ const EventPage = () => {
 
         const categoryResponse = await getCategoryById(response.data.categoryId);
         setCategory(categoryResponse);
+
+        const userDiscountResponse = await getUserDiscount();
+        setDiscountUser(userDiscountResponse.data);
+
+        const userPointResponse = await getUserPoint();
+        setPoint(userPointResponse.data);
 
         const commentsResponse = await getCommentsByEventId(eventId);
         console.log('Fetched comments:', commentsResponse); // Log the full response
@@ -110,13 +119,14 @@ const EventPage = () => {
     setCommentLoading(true);
 
     if (!userId || !commentText || !rating ) {
+      setCommentError('Text amd Rating are Required.');
       console.error('User ID, comment text, and rating are required');
       setCommentLoading(false);
       return;
     }
 
     if (hasCommented) {
-      console.error('You have already submitted a comment for this event.');
+      setCommentError('You have already submitted a comment for this event.');
       setCommentLoading(false);
       return;
     }
@@ -133,8 +143,10 @@ const EventPage = () => {
 
       setCommentText('');
       setRating(0);
+      setCommentError(null);
     } catch (error) {
       console.error('Error creating comment:', error);
+      setCommentError('An error occured while submitting your comment. Please try again!');
     } finally {
       setCommentLoading(false);
     }
@@ -148,16 +160,13 @@ const EventPage = () => {
     setDiscountLoading(true);
 
     try {
-      const response = await applyEventDiscount(parseInt(id as string), discountCode);
-      setDiscountResult({
-        message: response.message,
-        discountedPrice: response.discountedPrice,
-      });
-      setDiscountApplied(true);
-    } catch (error: any) {
-      setDiscountResult({
-        message: error.response?.data?.error || 'An error occurred while applying the discount',
-      });
+      const response = await getEventDiscount(parseInt(id as string), discountCode);
+      if(response){
+        setDiscountEvent(response.data)
+        setDiscountApplied(true)
+      }
+    } catch (error) {
+      console.error('Error get discount:', error);
     } finally {
       setDiscountLoading(false);
     }
@@ -192,22 +201,121 @@ const EventPage = () => {
     return <Text className="max-container padding-container mx-auto p-4 mb-20">No event found</Text>;
   }
 
-  const handleBuyTicket = async () => {
+  const handleMakeTicket = async () => {
     try {
-      if(event.eventType === 'Free'){
-        const free = await freeTicket(event.id, event.availableSeats, ticketCount);
+      const free = await freeTicket(event.id, event.availableSeats, ticketCount);
+      toast({
+        title: "Make Ticket successful.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Failed to make ticket:", error);
+      toast({
+        title: "Make Ticket failed.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const calculateFinalAmount = () => {
+    let totalAmount = event.price * ticketCount;
+    let currentDiscount = 0;
+
+    if (useUserDiscount && discountUser) {
+      currentDiscount += discountUser.discountPercentage;
+    }
+
+    if (discountEvent !== 0) {
+      currentDiscount += discountEvent;
+    }
+
+    const discountAmount = (currentDiscount / 100) * totalAmount;
+    let beforePointAmount = totalAmount - discountAmount;
+
+    let finalAmount = beforePointAmount;
+    let pointUsed = 0;
+
+    if (usePoints && point > 0) {
+      if (point > beforePointAmount) {
+        pointUsed = beforePointAmount;
+        finalAmount = 0;
+      } else {
+        pointUsed = point;
+        finalAmount = beforePointAmount - point;
+      }
+    }
+  
+    return (
+      <>
+      <form onSubmit={handleMakeTransaction}>
+        <Text mt="1rem" fontWeight="bold">
+          Discount Amount: Rp{formatPrice(discountAmount)}
+        </Text>
+        <Text mt="1rem" fontWeight="bold">
+          Points Used: Rp{formatPrice(pointUsed)}
+        </Text>
+        <Text mt="1rem" fontWeight="bold">
+          Final Amount: Rp{formatPrice(finalAmount)}
+        </Text>
+        <Input type="hidden" name="totalAmount" value={totalAmount} />
+        <Input type="hidden" name="discountAmount" value={discountAmount} />
+        <Input type="hidden" name="pointUsed" value={pointUsed} />
+        <Input type="hidden" name="finalAmount" value={finalAmount} />
+        <Button type="submit" colorScheme="teal" mt={4} isLoading={ticketLoading}>
+          Make Transaction
+        </Button>
+      </form>
+      </>
+    );
+  };
+
+  const handleMakeTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent the default form submission behavior
+  
+    const formData = new FormData(e.currentTarget);
+    const totalAmount = formData.get('totalAmount');
+    const discountAmount = formData.get('discountAmount');
+    const pointUsed = formData.get('pointUsed');
+    const finalAmount = formData.get('finalAmount');
+  
+    try {
+      let discountId;
+      if (discountUser) {
+        discountId = discountUser.id;
+      } else {
+        discountId = 0;
+      }
+  
+      const order = await orderTicket(
+        event.id, 
+        ticketCount, 
+        Number(totalAmount), 
+        Number(pointUsed), 
+        Number(discountAmount), 
+        Number(finalAmount), 
+        discountId
+      );
+      if(order){
         toast({
-          title: "Make Ticket successful.",
+          title: "Make order successful.",
           status: "success",
           duration: 5000,
           isClosable: true,
         });
-        fetchEventDetails(event.id)
       }else{
-        console.log("soon")
+        toast({
+          title: "Make Ticket failed.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       }
     } catch (error) {
-      console.error("Failed to make ticket:", error);
+      console.error("Failed to make order:", error);
       toast({
         title: "Make Ticket failed.",
         status: "error",
@@ -257,7 +365,7 @@ const EventPage = () => {
             )}
           </div>
 
-          {userRole === 'Customer' && !isEventInFuture() && (
+          {userRole === 'Customer' && (
             <form onSubmit={handleCommentSubmit} className="mb-8">
               <Stack spacing={3}>
                 <Textarea
@@ -278,6 +386,7 @@ const EventPage = () => {
                     half={false}
                   />
                 </div>
+                {commentError && <Text color="red.500">{commentError}</Text>}
                 <Button type="submit" isLoading={commentLoading} disabled={hasCommented} className="bg-blue-500 text-white px-4 py-2 rounded">
                   {hasCommented ? 'You have already commented' : 'Submit Comment'}
                 </Button>
@@ -285,7 +394,6 @@ const EventPage = () => {
             </form>
           )}
 
-          {!isEventInFuture() && (
             <div className="mt-8">
               <Text as="h2" className="text-2xl font-bold mb-4">Comments</Text>
               {comments?.length === 0 ? (
@@ -293,14 +401,13 @@ const EventPage = () => {
               ) : (
                 comments.map((comment) => (
                   <div key={comment.id} className="mb-4 p-4 border rounded-md shadow-md">
-                    <Text as="strong" className="block">{comment.transaction.user?.username || 'Unknown User'}:</Text>
-                    <Text>{comment.rating}</Text>
-                    <Text>{comment.text}</Text>
+                    <Text fontWeight="bold" as="strong" className="block">{comment.transaction.user?.username || 'Unknown User'}</Text>
+                    <ReactStars count={5} value={comment.rating} size={24} color2={'#ffd700'} half={false}/>
+                    <Text>"{comment.text}"</Text>
                   </div>
                 ))
               )}
             </div>
-          )}
           
         </div>
 
@@ -310,37 +417,10 @@ const EventPage = () => {
             <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4 text-center">
             <Text className="text-lg mb-2">Available Seats: {event.availableSeats}</Text>
               {userRole === 'Customer' && event.availableSeats > 0 && (
-              <Button
-                onClick={onOpen}
-                isLoading={ticketLoading}
-                disabled={ticketLoading}
-                className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4"
-              >
-                Book Ticket
-              </Button>
+                <Button onClick={onOpen} isLoading={ticketLoading} disabled={ticketLoading} className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-4">
+                  Book Ticket
+                </Button>
                )}
-
-              <Input
-                placeholder="Enter Discount Code"
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value)}
-                required
-                className="mb-2 p-2 border rounded w-full"
-              />
-              <Button
-                onClick={handleApplyDiscount}
-                isLoading={discountLoading}
-                disabled={discountLoading || discountApplied}
-                className="bg-green-500 text-white px-4 py-2 rounded w-full"
-              >
-                {discountApplied ? 'Discount Applied' : 'Redeem Discount'}
-              </Button>
-              {discountResult && (
-                <Text className="mt-2">
-                  {discountResult.message}
-                  {discountResult.discountedPrice && ` Discounted Price: Rp${discountResult.discountedPrice}`}
-                </Text>
-              )}
 
               {userRole === 'Organizer' && userId === event.organizerId && (
                 <Button onClick={handleCreatePromotion} className="bg-blue-500 text-white px-4 py-2 rounded w-full mt-4">
@@ -351,30 +431,100 @@ const EventPage = () => {
           </div>
         )}
 
-         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>Book Ticket</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  <Text>Number of ticket</Text>
-                  <NumberInput defaultValue={1} min={1} max={event.availableSeats} value={ticketCount}
-                    onChange={(valueString) => setTicketCount(Number(valueString))}>
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Book Ticket</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {event.eventType === 'Paid' && (
+                <>
+                  <Text fontWeight="bold" mb="1rem">
+                    Available Seats: {event.availableSeats}
+                  </Text>
+                  <Text fontWeight="bold" mb="1rem">
+                    Price per ticket: Rp{formatPrice(event.price)}
+                  </Text>
+                  <Text>Number of tickets</Text>
+                  <NumberInput
+                    defaultValue={1}
+                    min={1}
+                    max={event.availableSeats}
+                    value={ticketCount}
+                    onChange={(valueString) => setTicketCount(Number(valueString))}
+                    isRequired
+                    mb="1rem"
+                  >
                     <NumberInputField />
                     <NumberInputStepper>
                       <NumberIncrementStepper />
                       <NumberDecrementStepper />
                     </NumberInputStepper>
                   </NumberInput>
-                </ModalBody>
 
-                <ModalFooter>
-                  <Button colorScheme='blue' mr={3} onClick={handleBuyTicket}>
+                  <Input
+                    placeholder="Enter Discount Code"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    mb="1rem"
+                  />
+
+                  <Button
+                    onClick={handleApplyDiscount}
+                    isLoading={discountLoading}
+                    disabled={discountLoading}
+                    colorScheme="green"
+                    mb="1rem"
+                  > 
+                    {Number(discountEvent) === 0 ? 'Apply Code' : 'Discount Applied'}
+                  </Button>
+
+                  {discountUser && (
+                    <Checkbox onChange={() => setUseUserDiscount(!useUserDiscount)} mb="1rem">
+                      Use Referral Code Discount ({discountUser.discountPercentage}%)
+                    </Checkbox>
+                  )}
+
+                  {point > 0 && (
+                    <Checkbox onChange={() => setUsePoints(!usePoints)}>
+                      Use Points ({point} points available)
+                    </Checkbox>
+                  )}
+
+                  {calculateFinalAmount()}
+                </>
+              )}
+
+              {event.eventType === 'Free' && (
+                <>
+                  <Text fontWeight="bold" mb="1rem">
+                    Available Seats: {event.availableSeats}
+                  </Text>
+                  <Text>Number of tickets</Text>
+                  <NumberInput
+                    defaultValue={1}
+                    min={1}
+                    max={event.availableSeats}
+                    value={ticketCount}
+                    onChange={(valueString) => setTicketCount(Number(valueString))}
+                    isRequired
+                    mb="1rem"
+                  >
+                    <NumberInputField />
+                    <NumberInputStepper>
+                      <NumberIncrementStepper />
+                      <NumberDecrementStepper />
+                    </NumberInputStepper>
+                  </NumberInput>
+                  <Button colorScheme="teal" mt={4} onClick={handleMakeTicket}>
                     Book
                   </Button>
-                </ModalFooter>
-              </ModalContent>
-          </Modal>
+                </>
+              )}
+            </ModalBody>
+
+          </ModalContent>
+        </Modal>
       </div>
     </div>
   );

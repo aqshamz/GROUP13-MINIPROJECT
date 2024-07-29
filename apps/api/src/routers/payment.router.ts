@@ -19,6 +19,7 @@ export class PaymentRouter {
     this.router.post('/transaction', verifyToken, customerGuard, this.paymentController.finishTransaction);
     this.router.get('/transaction', verifyToken, customerGuard, this.paymentController.getTransactionData);
     this.router.post('/ticket', verifyToken, customerGuard, this.paymentController.createFreeTicket);
+    this.router.post('/specialcode', this.paymentController.getSpecialcode);
   }
 
   getRouter(): Router {

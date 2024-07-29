@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Text, UnorderedList, ListItem, Box, Link } from "@chakra-ui/react";
+import { Text, UnorderedList, ListItem, Box, Link, Icon } from "@chakra-ui/react";
 import { getEventOrganizer } from "@/api/management";
 import { EventDashboard } from '../../interfaces';
+import { FaArrowCircleRight } from "react-icons/fa";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -51,7 +52,7 @@ export default function Transactions() {
               <Text>Date: {formatDate(event.datetime)}</Text>
               <Text>Event Type: {event.eventType}</Text>
               <Link href={`/event/${event.id}`}>
-                See More Details
+                See More Details <Icon as={FaArrowCircleRight} boxSize={4} color="black.600" />
               </Link>
             </ListItem>
           ))} 

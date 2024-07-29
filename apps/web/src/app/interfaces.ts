@@ -49,6 +49,11 @@ export interface Event {
     
   }
 
+  export interface UserDiscount {
+    id: number;
+    discountPercentage: number;
+  }
+
   export interface Transaction {
     id: number;
     userId: number;
@@ -59,6 +64,7 @@ export interface Event {
     discountAmount: number; 
     finalAmount: number; 
     status: string;
+    statusUserDiscount: number;
     event: {
       name: string;
     };

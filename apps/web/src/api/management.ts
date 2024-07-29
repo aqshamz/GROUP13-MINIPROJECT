@@ -58,3 +58,63 @@ export async function getTransactionOrganizer() {
       throw error;
     }
   }
+
+  export async function getSumAvailable() {
+    try {
+      const authToken = await getCookie("authToken")
+      const res = await axios.get(`${base_api}/managements/allavailable`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching all available:", error);
+      throw error;
+    }
+  }
+
+  export async function getCountBooked() {
+    try {
+      const authToken = await getCookie("authToken")
+      const res = await axios.get(`${base_api}/managements/allbooked`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching all booked:", error);
+      throw error;
+    }
+  }
+
+  export async function getTransactionStats() {
+    try {
+      const authToken = await getCookie("authToken")
+      const res = await axios.get(`${base_api}/managements/transactionstats`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching all booked:", error);
+      throw error;
+    }
+  }
+
+  export async function getRevenue() {
+    try {
+      const authToken = await getCookie("authToken")
+      const res = await axios.get(`${base_api}/managements/revenue`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching all booked:", error);
+      throw error;
+    }
+  }

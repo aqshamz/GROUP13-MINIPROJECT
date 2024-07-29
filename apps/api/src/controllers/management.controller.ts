@@ -135,4 +135,135 @@ export class ManagementController {
             res.status(500).json({ message: (error as Error).message });
         }
     }
+
+    async getAllAvailable(req: Request, res: Response) {
+        try {
+            const user = req.user;
+            if (!user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            const availableData = await prisma.event.aggregate({
+                where: {
+                  organizerId: parseInt(user.id),
+                },
+                _sum: {
+                  availableSeats: true, 
+                },
+            });
+      
+            return res.status(200).send({
+                message: "Success",
+                data: availableData._sum.availableSeats,
+            });
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    async getRevenue(req: Request, res: Response) {
+        try {
+            const user = req.user;
+            if (!user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            const revenueData = await prisma.transaction.aggregate({
+                where: {
+                    status: "Completed",
+                    event: {
+                        organizerId: parseInt(user.id),
+                    },
+                },
+                _sum: {
+                  totalAmount: true, 
+                },
+            });
+      
+            return res.status(200).send({
+                message: "Success",
+                data: revenueData._sum.totalAmount,
+            });
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    async getAllBooked(req: Request, res: Response) {
+        try {
+            const user = req.user;
+            if (!user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            const [ticketCount] = await Promise.all([
+                prisma.ticket.count({
+                    where: {
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                })
+            ]);
+
+            return res.status(200).send({
+                message: "Success",
+                data: ticketCount,
+            });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    async getTransactionStats(req: Request, res: Response) {
+        try {
+            const user = req.user;
+            if (!user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            const [pending, cancel, complete ] = await Promise.all([
+                prisma.transaction.count({
+                    where: {
+                        status: "Pending",
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                }),
+                prisma.transaction.count({
+                    where: {
+                        status: "Cancelled",
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                }),
+                prisma.transaction.count({
+                    where: {
+                        status: "Completed",
+                        event: {
+                            organizerId: parseInt(user.id),
+                        },
+                    },
+                })
+            ]);
+
+            return res.status(200).send({
+                message: "Success",
+                pending,
+                cancel,
+                complete
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 }
