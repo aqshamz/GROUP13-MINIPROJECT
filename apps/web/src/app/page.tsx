@@ -1,13 +1,13 @@
 
 import Hero from '@/components/Hero'
-import Camp from '@/components/Camp'
+import EventScroll from '@/components/EventScroll'
 import Features from '@/components/Features'
 
 export default function Home() {
   return (
    <>
     <Hero />
-    <Camp />
+    <EventScroll />
     <Features />
    </>
   )
