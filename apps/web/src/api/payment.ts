@@ -46,6 +46,21 @@ export const finishTransaction = async (id: number, type: number) => {
     
     return response.data;
   } catch (error) {
-    throw new Error('Login failed');
+    throw new Error('Transaction failed');
+  }
+};
+
+export const freeTicket = async (eventId: number, seat: number, amount: number) => {
+  try {
+    const authToken = await getCookie("authToken")
+    const response = await axios.post(`${base_api}/payments/ticket`,  { eventId, seat, amount }, // Body of the request
+    {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Make Ticket failed');
   }
 };
