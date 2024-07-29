@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react';
-import { Container, Text, FormControl, FormLabel, Input, Button, Card, CardBody, useToast } from '@chakra-ui/react';
+import { Container, Text, FormControl, FormLabel, Input, Button, Card, CardBody, useToast, Link } from '@chakra-ui/react';
 import { login } from '../../api/auth';
 import { deleteCookie, setCookies, getCookie } from '@/actions/cookies';
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ const LoginPage = () => {
       const logindata = await login(email, password);
       await deleteCookie("authToken");
       await setCookies("authToken", logindata.token);
-      router.push("/");      
+      window.location.assign("/");     
     } catch (error) {
       toast({
         title: 'Login failed.',
@@ -55,6 +55,9 @@ const LoginPage = () => {
                 Login
               </Button>
             </FormControl>
+            <Link href="/register" mt={2} color="blue.600" fontWeight="bold">
+              Sign Up
+            </Link>
           </CardBody>
         </Card>
       </form>
