@@ -39,7 +39,7 @@ const CreateDiscountPage = () => {
       return;
     }
 
-    if (new Date(validFrom) < new Date()) {
+    if (new Date(validTo) < new Date()) {
       setError('Valid From date must be in the future.');
       setLoading(false);
       return;

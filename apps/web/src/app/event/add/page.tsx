@@ -296,7 +296,7 @@ export default function EventAdd() {
               </FormControl>
             )}
             <FormControl>
-              <Button colorScheme="blue" onClick={handleCreateEvent} className="bg-blue-700 text-white p-2 rounded">
+              <Button colorScheme="blue" onClick={handleCreateEvent} className="bg-green-700 text-white p-2 rounded">
                 Submit
               </Button>
             </FormControl>
